@@ -2,7 +2,7 @@
 
 This cloud driver uses the default provisionig driver based on JClouds, but start Ubuntu images on EC2 and then adds the `ubuntu` user to the list of sudoers. 
 
-> This cloud driver has been tested on Cloudify 2.1.1
+> This cloud driver has been tested with Cloudify 2.1.1 m2 build available for download [here](http://repository.cloudifysource.org/org/cloudifysource/2.1.1/gigaspaces-cloudify-2.1.1-ga-b1396-214.zip)
 
 # Installation 
 
