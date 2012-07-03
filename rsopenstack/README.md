@@ -24,20 +24,16 @@ user {
 	 
 	 // Optional. Key used to access cloud.
 	 // When used with the default driver, maps to the credential used to create the ComputeServiceContext.
-	 apiKey "ENTER_KEY"
-		 	 
-}
-			
+	 apiKey "ENTER_KEY"		 	
+   }		
 custom ([
 	"openstack.endpoint" : "https://servers.api.rackspacecloud.com",
 	"openstack.identity.endpoint": "https://auth.api.rackspacecloud.com/",
 	"openstack.tenant" : "ENTER_TENANT",
 	"openstack.wireLog": "false"
-
 ])
 </code></pre>
 
-* Place your key file (.pem file) in the upload directory of the cloud driver and update the relevant locations in the `rsopenstack-cloud.groovy` file with the key file's namm
 
 * Bootstrap the cloud: 
 <pre><code>

@@ -43,7 +43,7 @@ custom ([
 ])
 </code></pre>
 
-* Place your key file (.pem file) in the upload directory of the cloud driver and update the relevant locations in the `openstack-cloud.groovy` file with the key file's namm
+* Place your key file (.pem file) in the upload directory of the cloud driver and update the relevant locations in the `openstack-cloud.groovy` file with the key file's name
 
 * Bootstrap the cloud: 
 <pre><code>
