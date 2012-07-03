@@ -1,4 +1,4 @@
-# EC2 Sudoer Cloud Driver  
+# EC2 Sudoer Cloud Driver ( for CentOs ) 
 
 This cloud driver disables the requiretty flag in /etc/sudoers, so that Cloudify will be able to invoke remote ssh commands as a sudoer. This feature will be a part of Cloudify in the near future.
 
@@ -28,18 +28,13 @@ user {
 		 
 	 keyFile "ENTER_KEY_FILE_NAME"
 }
-...
-templates ([
-				
-				SMALL_LINUX : template{
-					...
-					options ([
-							...
-							"keyPair" : "ENTER_KEY_PAIR_NAME"
-							])
-				}
-])				
-
+templates ([			
+	SMALL_LINUX : template{				
+		options ([							
+				"keyPair" : "ENTER_KEY_PAIR_NAME"
+				])
+	}
+])
 </code></pre>
 
 * Place your key file (.pem file) in the upload directory of the cloud driver and update the relevant locations in the `ec2-cloud.groovy` file with the key file's namm
