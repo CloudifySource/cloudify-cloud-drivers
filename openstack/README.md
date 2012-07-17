@@ -1,8 +1,9 @@
-# EC2 Ubuntu Cloud Driver  
+# OpenStack Sudoer Cloud Driver ( for CentOs ) 
 
-This cloud driver uses the default provisionig driver based on JClouds, but start Ubuntu images on EC2 and then adds the `ubuntu` user to the list of sudoers. 
+This cloud driver disables the requiretty flag in /etc/sudoers, so that Cloudify will be able to invoke remote ssh commands as a sudoer. This feature will be a part of Cloudify in the near future.
 
-> This cloud driver has been tested with Cloudify 2.1.1 m2 build available for download [here](http://repository.cloudifysource.org/org/cloudifysource/2.1.1/gigaspaces-cloudify-2.1.1-ga-b1396-214.zip)
+
+> This cloud driver has been tested with Cloudify 2.1.1 build 1396-361 available for download [here](http://repository.cloudifysource.org/org/cloudifysource/2.1.1/gigaspaces-cloudify-2.1.1-ga-b1396-361.zip)
 
 # Installation 
 
@@ -11,10 +12,10 @@ To install this driver following the following steps (make sure you have git cli
 * Clone the repo and copy the cloud driver folder to the right location in the cloudify distro: 
 <pre><code>
 git clone git@github.com:CloudifySource/cloudify-cloud-drivers.git
-cp -r ec2-ubuntu/ <cloudify root>/tools/cli/plugins/esc
+cp -r openstack/ <cloudify root>/tools/cli/plugins/esc
 </code></pre>
 
-* Edit the file `ec2-ubuntu-cloud.groovy` and add your cloud credentials instead of the place holders
+* Edit the file `openstack-cloud.groovy` and add your cloud credentials instead of the place holders
 <pre><code>
 user {
 	 // Optional. Identity used to access cloud. 
@@ -27,9 +28,22 @@ user {
 		 
 	 keyFile "ENTER_KEY_FILE_NAME"
 }
+templates ([			
+	  SMALL_LINUX : template{				
+		    options ([							
+			   "keyPair" : "ENTER_KEY_PAIR_NAME"
+	         ])
+	 }
+])
+custom ([
+ "openstack.endpoint" : "https://az-1.region-a.geo-1.compute.hpcloudsvc.com/",
+ "openstack.identity.endpoint": "https://region-a.geo-1.identity.hpcloudsvc.com:35357/",
+ "openstack.tenant" : "ENTER_TENANT",
+ "openstack.wireLog": "false"
+])
 </code></pre>
 
-* Place your key file (.pem file) in the upload directory of the cloud driver and update the relevant locations in the `ec2-ubuntu-cloud.groovy` file with the key file's name.
+* Place your key file (.pem file) in the upload directory of the cloud driver and update the relevant locations in the `openstack-cloud.groovy` file with the key file's name
 
 * Bootstrap the cloud: 
 <pre><code>
@@ -63,8 +77,8 @@ Hit '<ctrl-d>' or 'exit' to exit the console.
 Cloudify version: 2.1.0
 
 
-cloudify@default> bootstrap-cloud -timeout 20 ec2-ubuntu
+cloudify@default> bootstrap-cloud -timeout 20 openstack
 </code></pre>
 
-If you need more detailed directions you can refer to the [EC2 setup instructions](http://www.cloudifysource.org/guide/setup/configuring_ec2) in the cloudify documentation
+If you need more detailed directions you can refer to the [OpenStack setup instructions](http://www.cloudifysource.org/guide/setup/configuring_openstack) in the cloudify documentation
 
