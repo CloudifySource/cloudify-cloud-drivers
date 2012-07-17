@@ -77,6 +77,32 @@ cloud {
 	 */
 	templates ([
 				// Mandatory. Template Name.
+				SMALL_LINUX : template {
+					// Mandatory. Image ID.
+					imageId "us-east-1/ami-e1aa7388"
+					// Mandatory. Files from the local directory will be copied to this directory on the remote machine.
+					remoteDirectory "/home/ubuntu/gs-files"
+					// Mandatory. Amount of RAM available to machine.					
+					machineMemoryMB 1600
+					// Mandatory. Hardware ID.
+					hardwareId "m1.small"
+					// Optional. Location ID.
+					locationId "us-east-1"
+
+					// Additional template options.
+					// When used with the default driver, the option names are considered
+					// method names invoked on the TemplateOptions object with the value as the parameter.
+					options ([
+								"securityGroups" : ["default"]as String[],
+								"keyPair" : "ENTER_KEY_PAIR_NAME"
+							])
+
+					// Optional. Overrides to default cloud driver behavior.
+					// When used with the default driver, maps to the overrides properties passed to the ComputeServiceContext a
+				overrides (["jclouds.ec2.ami-query":"",
+								"jclouds.ec2.cc-ami-query":""])
+				},
+				// Mandatory. Template Name.
 				MEDIUM_LINUX : template{
 					// Mandatory. Image ID.
 					imageId "us-east-1/ami-e1aa7388"

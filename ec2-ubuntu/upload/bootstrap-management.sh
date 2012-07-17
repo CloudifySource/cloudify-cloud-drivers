@@ -41,6 +41,8 @@ function error_exit_on_level {
 export EXT_JAVA_OPTIONS="-Dcom.gs.multicast.enabled=false"
 #export JAVA_HOME=/usr/lib/jvm/jre
 
+sudo apt-get update -y
+
 # install java on Ubuntu
 if ! which java > /dev/null; then
     sudo apt-get install -y default-jdk
