@@ -38,25 +38,29 @@ function error_exit_on_level {
 	fi
 }
 
+# make sure we have "requiretty" disabled in sudoers
+if [ "$CLOUDIFY_AGENT_ENV_PRIVILEGED" = "true" ]; then
+	if grep -q -E '[^!]requiretty' /etc/sudoers; then
+		echo "Defaults:`whoami` !requiretty" | sudo tee /etc/sudoers.d/`whoami` >/dev/null
+		sudo chmod 0440 /etc/sudoers.d/`whoami`
+	fi
+fi 
+
+
 export EXT_JAVA_OPTIONS="-Dcom.gs.multicast.enabled=false"
 #export JAVA_HOME=/usr/lib/jvm/jre
 
-sudo apt-get update -y
+sudo apt-get update -y 
 
 # install java on Ubuntu
 if ! which java > /dev/null; then
-    sudo apt-get install -y default-jdk
+    sudo apt-get install -y default-jdk	
 fi
 # install zip on Ubuntu
 if ! which unzip > /dev/null; then
     sudo apt-get install -y unzip
 fi
 
-# make sure we have "requiretty" disabled in sudoers
-if grep -q -E '[^!]requiretty' /etc/sudoers; then
-    echo "Defaults:`whoami` !requiretty" | sudo tee /etc/sudoers.d/`whoami` >/dev/null
-    sudo chmod 0440 /etc/sudoers.d/`whoami`
-fi
 
 
 export JAVA_HOME=/usr/lib/jvm/default-java
