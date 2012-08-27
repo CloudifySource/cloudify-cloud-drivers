@@ -77,7 +77,7 @@ cloud {
      * Cloud machine templates available with this cloud.
      */
     templates ([
-            SMALL_LINUX : template{ //ubuntu 12.04
+            SMALL_LINUX : template{ //ubuntu 11.10
                 // Mandatory. Image ID.
                 imageId "us-east-1/ami-e1aa7388"
                 // Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
@@ -112,7 +112,7 @@ cloud {
                 username "ubuntu"
 
             },
-            MEDIUM_LINUX : template{ //ubuntu 12.04
+            MEDIUM_LINUX : template{ //ubuntu 11.10
                 // Mandatory. Image ID.
                 imageId "us-east-1/ami-e1aa7388"
                 // Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
