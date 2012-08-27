@@ -112,6 +112,43 @@ cloud {
                 username "ubuntu"
 
             },
+			
+			UB_12 : template{ //ubuntu 12.04
+                // Mandatory. Image ID.
+                imageId "us-east-1/ami-82fa58eb"
+                // Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
+                localDirectory "tools/cli/plugins/esc/ec2-ubuntu/upload"
+                // Mandatory. Files from the local directory will be copied to this directory on the remote machine.
+                remoteDirectory "/home/ubuntu/gs-files"
+                // Mandatory. Amount of RAM available to machine.
+                machineMemoryMB 1600
+                // Mandatory. Hardware ID.
+                hardwareId "m1.small"
+                // Optional. Location ID.
+                locationId "us-east-1"
+                // Optional. Name of key file to use for authenticating to the remot machine. Remove this line if key files
+                // are not used.
+                keyFile "KEYPAIR_FILE_NAME"
+
+                // Additional template options.
+                // When used with the default driver, the option names are considered
+                // method names invoked on the TemplateOptions object with the value as the parameter.
+                options ([
+                        "securityGroups" : ["default"]as String[],
+                        "keyPair" : "KEYPAIR_NAME"
+                ])
+
+                // Optional. Overrides to default cloud driver behavior.
+                // When used with the default driver, maps to the overrides properties passed to the ComputeServiceContext a
+                overrides (["jclouds.ec2.ami-query":"",
+                        "jclouds.ec2.cc-ami-query":""])
+                // enable sudo.
+                privileged true
+                //ssh user
+                username "ubuntu"
+
+            },				
+			
             MEDIUM_LINUX : template{ //ubuntu 11.10
                 // Mandatory. Image ID.
                 imageId "us-east-1/ami-e1aa7388"
@@ -134,7 +171,7 @@ cloud {
                 // method names invoked on the TemplateOptions object with the value as the parameter.
                 options ([
                         "securityGroups" : ["default"]as String[],
-                        "keyPair" : "KEYPAIR_FILE_NAME"
+                        "keyPair" : "KEYPAIR_NAME"
                 ])
 
                 // Optional. Overrides to default cloud driver behavior.
