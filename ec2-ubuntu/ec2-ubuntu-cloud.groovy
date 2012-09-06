@@ -7,7 +7,7 @@
 
 cloud {
     // Mandatory. The name of the cloud, as it will appear in the Cloudify UI.
-    name = "ec2-ubuntu"
+    name = "ec2"
 
     /********
      * General configuration information about the cloud driver implementation.
@@ -16,7 +16,7 @@ cloud {
         // Optional. The cloud implementation class. Defaults to the build in jclouds-based provisioning driver.
         className "org.cloudifysource.esc.driver.provisioning.jclouds.DefaultProvisioningDriver"
         // Optional. The template name for the management machines. Defaults to the first template in the templates section below.
-        managementMachineTemplate "MEDIUM_LINUX"
+        managementMachineTemplate "MEDIUM_UBUNTU"
         // Optional. Indicates whether internal cluster communications should use the machine private IP. Defaults to true.
         connectToPrivateIp true
     }
@@ -29,7 +29,6 @@ cloud {
         // When using the default cloud driver, maps to the Compute Service Context provider name.
         provider "aws-ec2"
 
-
         // Optional. The HTTP/S URL where cloudify can be downloaded from by newly started machines. Defaults to downloading the
         // cloudify version matching that of the client from the cloudify CDN.
         // Change this if your compute nodes do not have access to an internet connection, or if you prefer to use a
@@ -41,9 +40,8 @@ cloud {
         // Optional. Defaults to true. Specifies whether cloudify should try to deploy services on the management machine.
         // Do not change this unless you know EXACTLY what you are doing.
 
-
         //
-        managementOnlyFiles ([])
+        managementOnlyFiles([])
 
         // Optional. Logging level for the intenal cloud provider logger. Defaults to INFO.
         sshLoggingLevel "WARNING"
@@ -53,9 +51,7 @@ cloud {
         // Mandatory. Number of management machines to start on bootstrap-cloud. In production, should be 2. Can be 1 for dev.
         numberOfManagementMachines 1
 
-
         reservedMemoryCapacityPerMachineInMB 1024
-
     }
 
     /*************
@@ -72,16 +68,87 @@ cloud {
 
     }
 
-
     /***********
      * Cloud machine templates available with this cloud.
      */
-    templates ([
-            SMALL_LINUX : template{ //ubuntu 11.10
+    templates([
+            // Mandatory. Template Name.
+            SMALL_LINUX: template {
                 // Mandatory. Image ID.
-                imageId "us-east-1/ami-e1aa7388"
+                imageId "us-east-1/ami-76f0061f"
+                // Mandatory. Files from the local directory will be copied to this directory on the remote machine.
+                remoteDirectory "/home/ec2-user/gs-files"
+                // Mandatory. Amount of RAM available to machine.
+                machineMemoryMB 1600
+                // Mandatory. Hardware ID.
+                hardwareId "m1.small"
+                // Optional. Location ID.
+                locationId "us-east-1"
                 // Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
-                localDirectory "tools/cli/plugins/esc/ec2-ubuntu/upload"
+                localDirectory "tools/cli/plugins/esc/ec2/ec2-linux/upload"
+                // Optional. Name of key file to use for authenticating to the remot machine. Remove this line if key files
+                // are not used.
+                keyFile "KEYPAIR_FILE_NAME"
+
+                // Additional template options.
+                // When used with the default driver, the option names are considered
+                // method names invoked on the TemplateOptions object with the value as the parameter.
+                options([
+                        "securityGroups": ["default"] as String[],
+                        "keyPair": "KEYPAIR_NAME"
+                ])
+
+                // Optional. Overrides to default cloud driver behavior.
+                // When used with the default driver, maps to the overrides properties passed to the ComputeServiceContext a
+                overrides(["jclouds.ec2.ami-query": "",
+                        "jclouds.ec2.cc-ami-query": ""])
+
+                // enable sudo.
+                privileged true
+
+
+            },
+            MEDIUM_LINUX: template {
+                // Mandatory. Image ID.
+                imageId "us-east-1/ami-76f0061f"
+                // Mandatory. Files from the local directory will be copied to this directory on the remote machine.
+                remoteDirectory "/home/ec2-user/gs-files"
+                // Mandatory. Amount of RAM available to machine.
+                machineMemoryMB 1600
+                // Mandatory. Hardware ID.
+                hardwareId "m1.small"
+                // Optional. Location ID.
+                locationId "us-east-1"
+                // Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
+                localDirectory "tools/cli/plugins/esc/ec2/ec2-linux/upload"
+                // Optional. Name of key file to use for authenticating to the remot machine. Remove this line if key files
+                // are not used.
+                keyFile "KEYPAIR_FILE_NAME"
+
+                // Additional template options.
+                // When used with the default driver, the option names are considered
+                // method names invoked on the TemplateOptions object with the value as the parameter.
+                options([
+                        "securityGroups": ["default"] as String[],
+                        "keyPair": "KEYPAIR_NAME"
+                ])
+
+                // Optional. Overrides to default cloud driver behavior.
+                // When used with the default driver, maps to the overrides properties passed to the ComputeServiceContext a
+                overrides(["jclouds.ec2.ami-query": "",
+                        "jclouds.ec2.cc-ami-query": ""])
+
+                // enable sudo.
+                privileged true
+
+
+            },
+
+            SMALL_UBUNTU: template { //ubuntu 12.04
+                // Mandatory. Image ID.
+                imageId "us-east-1/ami-a29943cb"
+                // Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
+                localDirectory "tools/cli/plugins/esc/ec2/ubuntu/upload"
                 // Mandatory. Files from the local directory will be copied to this directory on the remote machine.
                 remoteDirectory "/home/ubuntu/gs-files"
                 // Mandatory. Amount of RAM available to machine.
@@ -97,63 +164,26 @@ cloud {
                 // Additional template options.
                 // When used with the default driver, the option names are considered
                 // method names invoked on the TemplateOptions object with the value as the parameter.
-                options ([
-                        "securityGroups" : ["default"]as String[],
-                        "keyPair" : "KEYPAIR_NAME"
+                options([
+                        "securityGroups": ["default"] as String[],
+                        "keyPair": "KEYPAIR_NAME"
                 ])
 
                 // Optional. Overrides to default cloud driver behavior.
                 // When used with the default driver, maps to the overrides properties passed to the ComputeServiceContext a
-                overrides (["jclouds.ec2.ami-query":"",
-                        "jclouds.ec2.cc-ami-query":""])
+                overrides(["jclouds.ec2.ami-query": "",
+                        "jclouds.ec2.cc-ami-query": ""])
                 // enable sudo.
                 privileged true
                 //ssh user
                 username "ubuntu"
 
             },
-			
-			UB_12 : template{ //ubuntu 12.04
+            MEIDUM_UBUNTU: template { //ubuntu 12.04
                 // Mandatory. Image ID.
-                imageId "us-east-1/ami-82fa58eb"
+                imageId "us-east-1/ami-a29943cb"
                 // Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
-                localDirectory "tools/cli/plugins/esc/ec2-ubuntu/upload"
-                // Mandatory. Files from the local directory will be copied to this directory on the remote machine.
-                remoteDirectory "/home/ubuntu/gs-files"
-                // Mandatory. Amount of RAM available to machine.
-                machineMemoryMB 1600
-                // Mandatory. Hardware ID.
-                hardwareId "m1.small"
-                // Optional. Location ID.
-                locationId "us-east-1"
-                // Optional. Name of key file to use for authenticating to the remot machine. Remove this line if key files
-                // are not used.
-                keyFile "KEYPAIR_FILE_NAME"
-
-                // Additional template options.
-                // When used with the default driver, the option names are considered
-                // method names invoked on the TemplateOptions object with the value as the parameter.
-                options ([
-                        "securityGroups" : ["default"]as String[],
-                        "keyPair" : "KEYPAIR_NAME"
-                ])
-
-                // Optional. Overrides to default cloud driver behavior.
-                // When used with the default driver, maps to the overrides properties passed to the ComputeServiceContext a
-                overrides (["jclouds.ec2.ami-query":"",
-                        "jclouds.ec2.cc-ami-query":""])
-                // enable sudo.
-                privileged true
-                //ssh user
-                username "ubuntu"
-
-            },				
-			
-            MEDIUM_LINUX : template{ //ubuntu 11.10
-                // Mandatory. Image ID.
-                imageId "us-east-1/ami-e1aa7388"
-                // Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
-                localDirectory "tools/cli/plugins/esc/ec2-ubuntu/upload"
+                localDirectory "tools/cli/plugins/esc/ec2/ubuntu/upload"
                 // Mandatory. Files from the local directory will be copied to this directory on the remote machine.
                 remoteDirectory "/home/ubuntu/gs-files"
                 // Mandatory. Amount of RAM available to machine.
@@ -169,26 +199,26 @@ cloud {
                 // Additional template options.
                 // When used with the default driver, the option names are considered
                 // method names invoked on the TemplateOptions object with the value as the parameter.
-                options ([
-                        "securityGroups" : ["default"]as String[],
-                        "keyPair" : "KEYPAIR_NAME"
+                options([
+                        "securityGroups": ["default"] as String[],
+                        "keyPair": "KEYPAIRNAME"
                 ])
 
                 // Optional. Overrides to default cloud driver behavior.
                 // When used with the default driver, maps to the overrides properties passed to the ComputeServiceContext a
-                overrides (["jclouds.ec2.ami-query":"",
-                        "jclouds.ec2.cc-ami-query":""])
+                overrides(["jclouds.ec2.ami-query": "",
+                        "jclouds.ec2.cc-ami-query": ""])
                 // enable sudo.
                 privileged true
                 //ssh user
                 username "ubuntu"
+
             }
     ])
-
 
     /*****************
      * Optional. Custom properties used to extend existing drivers or create new ones.
      */
-    custom ([:])
+    custom([:])
 }
 
