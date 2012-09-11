@@ -107,7 +107,7 @@ cloud {
                 username "ubuntu"
 
             },
-            MEIDUM_UBUNTU: template { //ubuntu 12.04
+            MEDIUM_LINUX: template { //ubuntu 12.04
                 // Mandatory. Image ID.
                 imageId "us-east-1/ami-a29943cb"
                 // Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
