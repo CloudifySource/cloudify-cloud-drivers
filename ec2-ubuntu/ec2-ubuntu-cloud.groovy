@@ -7,7 +7,7 @@
 
 cloud {
     // Mandatory. The name of the cloud, as it will appear in the Cloudify UI.
-    name = "ec2"
+    name = "ec2-ubuntu"
 
     /********
      * General configuration information about the cloud driver implementation.
