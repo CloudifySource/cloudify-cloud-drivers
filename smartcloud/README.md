@@ -1,4 +1,4 @@
-# Ibm SmartCloud Cloud Driver ( for RedHat ) 
+# IBM SmartCloud Cloud Driver ( for RedHat ) 
 
 > This cloud driver has been tested with Cloudify 2.3.0 M1 (build 3481) available for download [here](http://repository.cloudifysource.org/org/cloudifysource/2.3.0-M1/gigaspaces-cloudify-2.3.0-m1-b3481.zip)
 > Tested on image: 20070645 and location: 61
