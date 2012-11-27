@@ -63,7 +63,6 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 	private static final int DEFAULT_TIMEOUT_AFTER_CLOUD_INTERNAL_ERROR = 30 * 1000; // 30 seconds
 	private static final String smartcloud_WIRE_LOG = "smartcloud.wireLog";
 	private static final String smartcloud_KEY_PAIR = "smartcloud.keyPair";
-	private static final String smartcloud_SECURITYGROUP = "smartcloud.securityGroup";
 	private static final String smartcloud_smartcloud_ENDPOINT = "smartcloud.endpoint";
 	private static final String smartcloud_LOCATION = "smartcloud.location";
 	private static final String STARTING_THROTTLING = "The cloud reported an Internal Server Error (status 500)."

@@ -52,14 +52,11 @@ cloud {
 					keyFile "ENTER_KEY_FILE"
 					
 					options ([
-						"smartcloud.securityGroup" : "test",
 						"smartcloud.keyPair" : "ENTER_KEY_PAIR_NAME"
 					])
 					
 					// enable sudo.
 					privileged true
-
-					
 				}
 			])
 			
