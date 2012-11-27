@@ -64,8 +64,7 @@ cloud {
 			])
 			
 	custom ([
-		"smartcloud.endpoint" : "https://www-147.ibm.com/computecloud/enterprise/api/rest/",
-		"smartcloud.identity.endpoint": "https://region-a.geo-1.identity.hpcloudsvc.com:35357/",
+		"smartcloud.endpoint" : "https://www-147.ibm.com/computecloud/enterprise/api/rest/20100331/",
 		"smartcloud.location" : "61",
 		"smartcloud.wireLog": "false"
 

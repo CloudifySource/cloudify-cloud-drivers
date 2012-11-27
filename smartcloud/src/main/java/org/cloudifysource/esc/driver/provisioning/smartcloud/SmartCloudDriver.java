@@ -2,12 +2,10 @@ package org.cloudifysource.esc.driver.provisioning.smartcloud;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -15,8 +13,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -35,7 +31,6 @@ import org.cloudifysource.esc.driver.provisioning.CloudDriverSupport;
 import org.cloudifysource.esc.driver.provisioning.CloudProvisioningException;
 import org.cloudifysource.esc.driver.provisioning.MachineDetails;
 import org.cloudifysource.esc.driver.provisioning.ProvisioningDriver;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
@@ -51,9 +46,7 @@ import com.sun.jersey.api.client.filter.LoggingFilter;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 
 /**************
- * A custom cloud driver for IBM SmartCloud, using keystone authentication. In order to be able to define a floating IP for a
- * machine Changes will have to be made in the cloud driver. a floating ip should be allocated and attached to the
- * server in the newServer method, and detach and deleted upon machine shutdown.
+ * A custom cloud driver for IBM SmartCloud. 
  * 
  * 
  * @author aharon
@@ -64,12 +57,10 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 
 	private static final int MILLIS_IN_SECOND = 1000;
 	private static final String MACHINE_STATUS_ACTIVE = "5";
-	private static final int HTTP_NOT_FOUND = 404;
 	private static final int INTERNAL_SERVER_ERROR = 500;
 	private static final int SERVER_POLLING_INTERVAL_MILLIS = 10 * 1000; // 10 seconds
 	private static final int DEFAULT_SHUTDOWN_TIMEOUT_MILLIS = 10 * 60 * 1000; // 10 minutes
 	private static final int DEFAULT_TIMEOUT_AFTER_CLOUD_INTERNAL_ERROR = 30 * 1000; // 30 seconds
-	private static final String smartcloud_smartcloud_IDENTITY_ENDPOINT = "smartcloud.identity.endpoint";
 	private static final String smartcloud_WIRE_LOG = "smartcloud.wireLog";
 	private static final String smartcloud_KEY_PAIR = "smartcloud.keyPair";
 	private static final String smartcloud_SECURITYGROUP = "smartcloud.securityGroup";
@@ -89,8 +80,6 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 	private String location;
 	private String endpoint;
 	private WebResource service;
-	private String pathPrefix;
-	private String identityEndpoint;
 	private final DocumentBuilderFactory dbf;
 	private final Object xmlFactoryMutex = new Object();
 
@@ -145,27 +134,14 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 			throw new IllegalArgumentException("Custom field '" + smartcloud_LOCATION + "' must be set");
 		}
 
-		this.pathPrefix = "20100331/";
 
 		this.endpoint = (String) this.cloud.getCustom().get(smartcloud_smartcloud_ENDPOINT);
 		if (this.endpoint == null) {
 			throw new IllegalArgumentException("Custom field '" + smartcloud_smartcloud_ENDPOINT + "' must be set");
 		}
-		try{
-		URI u = URI.create(this.endpoint);
-		} catch(Exception e)
-		{
-			e.printStackTrace();
-		
-		}
+
 		this.service = client.resource(this.endpoint);
 		this.service.addFilter(new HTTPBasicAuthFilter(this.cloud.getUser().getUser(),this.cloud.getUser().getApiKey()));
-
-/*		this.identityEndpoint = (String) this.cloud.getCustom().get(smartcloud_smartcloud_IDENTITY_ENDPOINT);
-		if (this.identityEndpoint == null) {
-			throw new IllegalArgumentException("Custom field '" + smartcloud_smartcloud_IDENTITY_ENDPOINT
-					+ "' must be set");
-		}*/
 
 		final String wireLog = (String) this.cloud.getCustom().get(smartcloud_WIRE_LOG);
 		if (wireLog != null) {
@@ -337,33 +313,18 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 		final Node node = new Node();
 		String response = "";
 		try {
-			response =	service.path(this.pathPrefix + "instances").accept(MediaType.APPLICATION_XML).get(String.class);
-			//response =
-					//service.path(this.pathPrefix + "servers/" + nodeId).accept(MediaType.APPLICATION_XML).get(String.class);
+			response =	service.path("instances").accept(MediaType.APPLICATION_XML).get(String.class);
+
 			final DocumentBuilder documentBuilder = createDocumentBuilder();
 			final Document xmlDoc = documentBuilder.parse(new InputSource(new StringReader(response)));
 
 			node.setId(xpath.evaluate("//Instance[ID='"+nodeId+"']/ID", xmlDoc));
 			node.setStatus(xpath.evaluate("//Instance[ID='"+nodeId+"']/Status", xmlDoc));
 			node.setName(xpath.evaluate("//Instance[ID='"+nodeId+"']/Name", xmlDoc));
-			//one IP return we set for both
+			//one IP return 
 			//node.setPrivateIp(xpath.evaluate("//Instance[ID='"+nodeId+"']/IP", xmlDoc));
 			node.setPublicIp(xpath.evaluate("//Instance[ID='"+nodeId+"']/IP", xmlDoc));
-			// We expect to get 2 IP addresses, public and private. Currently we get them both in an xml
-			// under a private node attribute. this is expected to change.
-			/*final NodeList addresses =
-					(NodeList) xpath.evaluate("/server/addresses/network/ip/@addr", xmlDoc, XPathConstants.NODESET);
-			if (node.getStatus().equalsIgnoreCase(MACHINE_STATUS_ACTIVE)) {
 
-				if (addresses.getLength() != 2) {
-					throw new IllegalStateException("Expected 2 addresses, private and public, got "
-							+ addresses.getLength() + " addresses");
-				}
-
-				node.setPrivateIp(addresses.item(0).getTextContent());
-				node.setPublicIp(addresses.item(1).getTextContent());
-			}
-*/
 			logger.finer("In getNode method, looking for server id : "+nodeId);
 			logger.finer("In getNode method, server id is : "+nodeId+" its status is: "+ node.getStatus()+" --> "+ getNodeStatus(node.getStatus()));
 			if (node.getId().equals(""))
@@ -407,24 +368,13 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 		return nodes;
 	}
 
-	// public void listFlavors(final String token) throws Exception {
-	// final WebResource service = client.resource(this.endpoint);
-	//
-	// String response = null;
-	//
-	// response = service.path(this.pathPrefix + "flavors").header("X-Auth-Token", token)
-	// .accept(MediaType.APPLICATION_XML).get(String.class);
-	//
-	// System.out.println(response);
-	//
-	// }
 
 	private List<String> listServerIds()
 			throws SmartCloudException {
 
 		String response = null;
 		try {
-			response =	service.path(this.pathPrefix + "instances").accept(MediaType.APPLICATION_XML).get(String.class);
+			response =	service.path("instances").accept(MediaType.APPLICATION_XML).get(String.class);
 			final DocumentBuilder documentBuilder = createDocumentBuilder();
 			final Document xmlDoc = documentBuilder.parse(new InputSource(new StringReader(response)));
 
@@ -490,7 +440,7 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 		for (final String serverId : serverIds) {
 			try {
 				logger.finer("In terminateServers deletes from cloud: "+serverId);
-				service.path(this.pathPrefix + "instances/"+serverId).accept(MediaType.APPLICATION_XML).delete();
+				service.path("instances/"+serverId).accept(MediaType.APPLICATION_XML).delete();
 			} catch (final UniformInterfaceException e) {
 				final String responseEntity = e.getResponse().getEntity(String.class);
 				throw new IllegalArgumentException(e + " Response entity: " + responseEntity);
@@ -593,7 +543,7 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 		String serverBootResponse = null;
 		try {
 			serverBootResponse =
-					service.path(this.pathPrefix + "instances")
+					service.path("instances")
 							.accept(MediaType.APPLICATION_XML).post(String.class, formData);
 		} catch (final UniformInterfaceException e) {
 			final String responseEntity = e.getResponse().getEntity(String.class);
@@ -675,141 +625,7 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 			}
 
 			Thread.sleep(SERVER_POLLING_INTERVAL_MILLIS);
-
 		}
-
-	}
-
-	@SuppressWarnings("rawtypes")
-	List<FloatingIP> listFloatingIPs(final String token)
-			throws SAXException, IOException {
-		final String response =
-				service.path(this.pathPrefix + "os-floating-ips").header("X-Auth-Token", token)
-						.accept(MediaType.APPLICATION_JSON).get(String.class);
-
-		final ObjectMapper mapper = new ObjectMapper();
-		final Map map = mapper.readValue(new StringReader(response), Map.class);
-		@SuppressWarnings("unchecked")
-		final List<Map> list = (List<Map>) map.get("floating_ips");
-		final List<FloatingIP> floatingIps = new ArrayList<FloatingIP>(map.size());
-
-		for (final Map floatingIpMap : list) {
-			final FloatingIP ip = new FloatingIP();
-
-			final Object instanceId = floatingIpMap.get("instance_id");
-
-			ip.setInstanceId(instanceId == null ? null : instanceId.toString());
-			ip.setIp((String) floatingIpMap.get("ip"));
-			ip.setFixedIp((String) floatingIpMap.get("fixed_ip"));
-			ip.setId(floatingIpMap.get("id").toString());
-			floatingIps.add(ip);
-		}
-		return floatingIps;
-
-	}
-
-	private FloatingIP getFloatingIpByIp(final String ip, final String token)
-			throws SAXException, IOException {
-		final List<FloatingIP> allips = listFloatingIPs(token);
-		for (final FloatingIP floatingIP : allips) {
-			if (ip.equals(floatingIP.getIp())) {
-				return floatingIP;
-			}
-		}
-
-		return null;
-	}
-
-	/*********************
-	 * Deletes a floating IP.
-	 * 
-	 * @param ip .
-	 * @param token .
-	 * @throws SAXException .
-	 * @throws IOException .
-	 */
-	public void deleteFloatingIP(final String ip, final String token)
-			throws SAXException, IOException {
-
-		final FloatingIP floatingIp = getFloatingIpByIp(ip, token);
-		if (floatingIp == null) {
-			logger.warning("Could not find floating IP " + ip + " in list. IP was not deleted.");
-		} else {
-			service.path(this.pathPrefix + "os-floating-ips/" + floatingIp.getId()).header("X-Auth-Token", token)
-					.accept(MediaType.APPLICATION_JSON).delete();
-
-		}
-
-	}
-
-	/**************
-	 * Allocates a floating IP.
-	 * 
-	 * @param token .
-	 * @return .
-	 */
-	public String allocateFloatingIP(final String token) {
-
-		try {
-			final String resp =
-					service.path(this.pathPrefix + "os-floating-ips").header("Content-type", "application/json")
-							.header("X-Auth-Token", token).accept(MediaType.APPLICATION_JSON).post(String.class, "");
-
-			final Matcher m = Pattern.compile("\"ip\": \"([^\"]*)\"").matcher(resp);
-			if (m.find()) {
-				return m.group(1);
-			} else {
-				throw new IllegalStateException("Failed to allocate floating IP - IP not found in response");
-			}
-		} catch (final UniformInterfaceException e) {
-			logRestError(e);
-			throw new IllegalStateException("Failed to allocate floating IP", e);
-		}
-
-	}
-
-	private void logRestError(final UniformInterfaceException e) {
-		logger.severe("REST Error: " + e.getMessage());
-		logger.severe("REST Status: " + e.getResponse().getStatus());
-		logger.severe("REST Message: " + e.getResponse().getEntity(String.class));
-	}
-
-	/**
-	 * Attaches a previously allocated floating ip to a server.
-	 * 
-	 * @param serverid .
-	 * @param ip public ip to be assigned .
-	 * @param token .
-	 * @throws Exception .
-	 */
-	public void addFloatingIP(final String serverid, final String ip, final String token)
-			throws Exception {
-
-		service.path(this.pathPrefix + "servers/" + serverid + "/action")
-				.header("Content-type", "application/json")
-				.header("X-Auth-Token", token)
-				.accept(MediaType.APPLICATION_JSON)
-				.post(String.class,
-						String.format("{\"addFloatingIp\":{\"server\":\"%s\",\"address\":\"%s\"}}", serverid, ip));
-
-	}
-
-	/**********
-	 * Detaches a floating IP from a server.
-	 * 
-	 * @param serverId .
-	 * @param ip .
-	 * @param token .
-	 */
-	public void detachFloatingIP(final String serverId, final String ip, final String token) {
-
-		service.path(this.pathPrefix + "servers/" + serverId + "/action")
-				.header("Content-type", "application/json")
-				.header("X-Auth-Token", token)
-				.accept(MediaType.APPLICATION_JSON)
-				.post(String.class,
-						String.format("{\"removeFloatingIp\":{\"server\": \"%s\", \"address\": \"%s\"}}",
-								serverId, ip));
 
 	}
 

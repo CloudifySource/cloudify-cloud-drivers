@@ -17,9 +17,9 @@
 package org.cloudifysource.esc.driver.provisioning.smartcloud;
 
 /*******
- * A node running in an OpenStack cloud.
+ * A node running in an IBM smartcloud.
  * 
- * @author barakme
+ * @author aharon
  * @since 2.1
  * 
  */
