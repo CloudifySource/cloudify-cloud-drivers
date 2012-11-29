@@ -108,16 +108,31 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 		}
 
 	}
-
+	
+	/**
+	 *  Called when the service that this provisioning implementation is responsible for scaling is undeployed.
+	 *  The implementation is expected to release/close all relevant resources, such as thread pools, sockets, files, etc.
+	 */
 	@Override
 	public void close() {
 	}
 
+	/**
+	 * @Return the name of this cloud.
+	 */
 	@Override
 	public String getCloudName() {
 		return "smartcloud";
 	}
 
+	/**
+	 * Called once on startup of the cloud driver, passing the cloud configuration to it.
+	 * 
+	 * @param cloud - The cloud configuration for this driver
+	 * @param templateName - The template required for this cloud driver.
+	 * @param management - true if this driver will launch management machines, false otherwise.
+	 * @param serviceName - The name of the service that is planned to be installed on this machine. Could be null if this is a management machine hosting more than one service
+	 */
 	@Override
 	public void setConfig(final Cloud cloud, final String templateName,
 			final boolean management, final String serviceName) {
@@ -151,6 +166,19 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 
 	}
 
+	/**
+	 * Starts an additional machine on the cloud , on the specific location, to scale out this specific service.
+	 * In case of an error while provisioning the machine, any allocated resources should be freed before throwing a CloudProvisioningException or TimeoutException to the caller.
+	 * 
+	 * @param locationId - the location to allocate the machine to.
+	 * @param duration - Time duration to wait for the instance.
+	 * @param unit - Time unit to wait for the instance.
+	 * 
+	 * @return The details of the started instance.
+	 * 
+	 * @throws java.util.concurrent.TimeoutException - In case the instance was not started in the allotted time.
+	 * @throws org.cloudifysource.esc.driver.provisioning.CloudProvisioningException - If a problem was encountered while starting the machine.
+	 */
 	@Override
 	public MachineDetails startMachine(final String locationId, final long duration, final TimeUnit unit)
 			throws TimeoutException, CloudProvisioningException {
@@ -181,6 +209,18 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 		return System.currentTimeMillis() + unit.toMillis(duration);
 	}
 
+	/**
+	 * Start the management machines for this cluster. 
+	 * This method is called once by the cloud administrator when bootstrapping a new cluster.
+	 * 
+	 * @param duration - timeout duration.
+	 * @param unit - timeout unit.
+	 * 
+	 * @return The created machine details.
+	 * 
+	 * @throws java.util.concurrent.TimeoutException - If creating the new machines exceeded the given timeout.
+	 * @throws org.cloudifysource.esc.driver.provisioning.CloudProvisioningException - If the machines needed for management could not be provisioned.
+	 */
 	@Override
 	public MachineDetails[] startManagementMachines(final long duration, final TimeUnit unit)
 			throws TimeoutException, CloudProvisioningException {
@@ -257,6 +297,19 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 		}
 	}
 
+	/**
+	 * Stops a specific machine for scaling in or shutting down a specific service.
+	 * 
+	 * @param ip - host-name/IP of the machine to shut down.
+	 * @param duration - time to wait for the shutdown operation.
+	 * @param unit - time unit for the shutdown operations
+	 * 
+	 * @return true if the operation succeeded, false otherwise.
+	 * 
+	 * @throws java.lang.InterruptedException - If the operation was interrupted.
+	 * @throws java.util.concurrent.TimeoutException - If the operation exceeded the given timeout.
+	 * @throws org.cloudifysource.esc.driver.provisioning.CloudProvisioningException - If the operation encountered an error.
+	 */
 	@Override
 	public boolean stopMachine(final String ip, final long duration, final TimeUnit unit)
 			throws InterruptedException, TimeoutException, CloudProvisioningException {
@@ -274,6 +327,12 @@ public class SmartCloudDriver extends CloudDriverSupport implements Provisioning
 		}
 	}
 
+	/**
+	 * Stops the management machines.
+	 * 
+	 * @throws java.util.concurrent.TimeoutException - in case the stop operation exceeded the given timeout.
+	 * @throws org.cloudifysource.esc.driver.provisioning.CloudProvisioningException - If the stop operation failed.
+	 */
 	@Override
 	public void stopManagementMachines()
 			throws TimeoutException, CloudProvisioningException {
