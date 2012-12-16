@@ -21,7 +21,7 @@ cp target/*.jar driver/upload/cloudify-overrides/lib/platform/esm
 
 * copy the cloud driver folder to the right location in the cloudify distro: 
 <pre><code>
-cp -r smartcloud/ &lt;cloudify root>/tools/cli/plugins/esc
+cp -r . &lt;cloudify root>/tools/cli/plugins/esc
 </code></pre>
 
 * copy the cloud driver jar file to lib/platform/esm: 
