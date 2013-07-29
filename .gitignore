@@ -1,3 +1,12 @@
 .DS_Store
 .idea/
 *.iml
+*.classpath
+*.project
+*.settings
+target/
+bin/
+private-ec2-driver/private-ec2/cloudify/clouds/privateEc2/upload/cloudify-overrides/lib/platform/esm/esc-2.6.1-5199-71-SNAPSHOT.jar
+private-ec2-driver/private-ec2/cloudify/clouds/privateEc2/upload/cloudify.pem
+private-ec2-driver/private-ec2/cloudify/cfn-templates/sampleApplication/someService-cfn.properties
+private-ec2-driver/private-ec2/cloudify/clouds/privateEc2/privateEc2-cloud.properties
