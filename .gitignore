@@ -6,7 +6,7 @@
 *.settings
 target/
 bin/
-private-ec2-driver/private-ec2/cloudify/clouds/privateEc2/upload/cloudify-overrides/lib/platform/esm/*.jar
-private-ec2-driver/private-ec2/cloudify/clouds/privateEc2/upload/*.pem
-private-ec2-driver/private-ec2/cloudify/clouds/privateEc2/*.properties
-private-ec2-driver/private-ec2/cloudify/cfn-templates/sampleApplication/*.properties
+private-ec2/cloudify/clouds/privateEc2/upload/cloudify-overrides/lib/platform/esm/*.jar
+private-ec2/cloudify/clouds/privateEc2/upload/*.pem
+private-ec2/cloudify/clouds/privateEc2/*.properties
+private-ec2/cloudify/cfn-templates/sampleApplication/*.properties
