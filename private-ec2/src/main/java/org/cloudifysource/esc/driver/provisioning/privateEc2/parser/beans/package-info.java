@@ -10,28 +10,8 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
  * specific language governing permissions and limitations under the License.
  ******************************************************************************/
-package org.cloudifysource.esc.driver.provisioning.privateEc2.parser.beans.types;
+package org.cloudifysource.esc.driver.provisioning.privateEc2.parser.beans;
 
 /**
- * A bean for string values in Amazon CloudFormation templates.
- * 
- * @author victor
- * 
+ * Beans for Amazon CloudFormation template parsing.
  */
-public class StringValue implements ValueType {
-
-	private final String value;
-
-	public StringValue(final String value) {
-		this.value = value;
-	}
-
-	public String getValue() {
-		return value.toString();
-	}
-
-	@Override
-	public String toString() {
-		return value;
-	}
-}

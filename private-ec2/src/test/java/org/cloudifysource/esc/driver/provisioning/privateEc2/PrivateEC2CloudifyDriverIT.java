@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright (c) 2013 GigaSpaces Technologies Ltd. All rights reserved
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ******************************************************************************/
 package org.cloudifysource.esc.driver.provisioning.privateEc2;
 
 import static org.junit.Assert.assertNotNull;
@@ -9,6 +24,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.cloudifysource.dsl.cloud.Cloud;
+import org.cloudifysource.dsl.cloud.compute.ComputeTemplate;
 import org.cloudifysource.dsl.internal.DSLException;
 import org.cloudifysource.dsl.internal.ServiceReader;
 import org.cloudifysource.esc.driver.provisioning.CloudProvisioningException;
@@ -58,7 +74,8 @@ public class PrivateEC2CloudifyDriverIT {
         ProvisioningContextImpl ctx = new ProvisioningContextImpl();
         ProvisioningContextAccess.setCurrentProvisioingContext(ctx);
         ctx.getInstallationDetailsBuilder().setCloud(this.cloud);
-        ctx.getInstallationDetailsBuilder().setTemplate(this.cloud.getCloudCompute().getTemplates().get(cloudTemplateName));
+        ComputeTemplate template = this.cloud.getCloudCompute().getTemplates().get(cloudTemplateName);
+		ctx.getInstallationDetailsBuilder().setTemplate(template);
 
         driver.setCustomDataFile(new File("./cloudify/cfn-templates/sampleApplication"));
         driver.setConfig(cloud, cloudTemplateName, true, "someService");

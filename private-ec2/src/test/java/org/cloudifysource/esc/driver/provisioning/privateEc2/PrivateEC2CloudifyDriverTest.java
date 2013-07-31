@@ -1,3 +1,15 @@
+/*******************************************************************************
+ * Copyright (c) 2013 GigaSpaces Technologies Ltd. All rights reserved
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ ******************************************************************************/
 package org.cloudifysource.esc.driver.provisioning.privateEc2;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -18,71 +30,72 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class PrivateEC2CloudifyDriverTest {
-    private static final Logger logger = Logger.getLogger(PrivateEC2CloudifyDriverTest.class.getName());
+	private static final Logger logger = Logger.getLogger(PrivateEC2CloudifyDriverTest.class.getName());
 
-    private PrivateEC2CloudifyDriver driver;
+	private PrivateEC2CloudifyDriver driver;
 
-    @Before
-    public void before() {
-        this.driver = new PrivateEC2CloudifyDriver();
-    }
+	@Before
+	public void before() {
+		this.driver = new PrivateEC2CloudifyDriver();
+	}
 
-    @Test
-    public void testGetDriverContextStatic() throws Exception {
-        driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
-        driver.setCustomDataFile(new File("./src/test/resources/cfn_templates/static-cfn.template"));
-        PrivateEc2Template template = (PrivateEc2Template) driver.getCFNTemplatePerService("static");
-        Assert.assertNotNull(template);
-        logger.info(template.toString());
-        Assert.assertNotNull(template.getResources());
-        Assert.assertNotNull(template.getEC2Instance().getProperties().getImageId());
-    }
+	@Test
+	public void testGetDriverContextStatic() throws Exception {
+		driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
+		driver.setCustomDataFile(new File("./src/test/resources/cfn_templates/static-cfn.template"));
+		PrivateEc2Template template = (PrivateEc2Template) driver.getCFNTemplatePerService("static");
+		Assert.assertNotNull(template);
+		logger.info(template.toString());
+		Assert.assertNotNull(template.getResources());
+		Assert.assertNotNull(template.getEC2Instance().getProperties().getImageId());
+	}
 
-    @Test
-    public void testGetDriverContextStaticWithVolume() throws Exception {
-        driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
-        driver.setCustomDataFile(new File("./src/test/resources/cfn_templates/static-with-volume-cfn.template"));
-        PrivateEc2Template template = (PrivateEc2Template) driver.getCFNTemplatePerService("static-with-volume");
-        Assert.assertNotNull(template);
-        logger.info(template.toString());
-        Assert.assertNotNull(template.getResources());
-        AWSEC2Instance awsec2Instance = (AWSEC2Instance) template.getEC2Instance();
-        Assert.assertNotNull(awsec2Instance.getProperties().getImageId());
-        Assert.assertNotNull(awsec2Instance.getProperties().getVolumes());
-        Assert.assertNotNull(((AWSEC2Volume) template.getEC2Volume("smallVolume")).getProperties().getSize());
-    }
+	@Test
+	public void testGetDriverContextStaticWithVolume() throws Exception {
+		driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
+		driver.setCustomDataFile(new File("./src/test/resources/cfn_templates/static-with-volume-cfn.template"));
+		PrivateEc2Template template = (PrivateEc2Template) driver.getCFNTemplatePerService("static-with-volume");
+		Assert.assertNotNull(template);
+		logger.info(template.toString());
+		Assert.assertNotNull(template.getResources());
+		AWSEC2Instance awsec2Instance = (AWSEC2Instance) template.getEC2Instance();
+		Assert.assertNotNull(awsec2Instance.getProperties().getImageId());
+		Assert.assertNotNull(awsec2Instance.getProperties().getVolumes());
+		Assert.assertNotNull(((AWSEC2Volume) template.getEC2Volume("smallVolume")).getProperties().getSize());
+	}
 
-    @Test
-    public void testGetDriverContextFolder() throws Exception {
-        driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
-        driver.setCustomDataFile(new File("./src/test/resources/cfn_templates"));
+	@Test
+	public void testGetDriverContextFolder() throws Exception {
+		driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
+		driver.setCustomDataFile(new File("./src/test/resources/cfn_templates"));
 
-        String templateName = "static-with-volume";
+		String templateName = "static-with-volume";
 
-        PrivateEc2Template template = (PrivateEc2Template) driver.getCFNTemplatePerService(templateName);
-        Assert.assertNotNull(template);
-        logger.info(template.toString());
-        Assert.assertNotNull(template.getResources());
-        AWSEC2Instance awsec2Instance = (AWSEC2Instance) template.getEC2Instance();
-        Assert.assertNotNull(awsec2Instance.getProperties().getImageId());
-        List<VolumeMapping> volumes = awsec2Instance.getProperties().getVolumes();
-        Assert.assertNotNull(volumes);
-        Assert.assertFalse(volumes.isEmpty());
-        Assert.assertNotNull(volumes.get(0).getVolumeId());
-        Assert.assertNotNull((template.getEC2Volume(volumes.get(0).getVolumeId().getValue())).getProperties().getSize());
-    }
+		PrivateEc2Template template = (PrivateEc2Template) driver.getCFNTemplatePerService(templateName);
+		Assert.assertNotNull(template);
+		logger.info(template.toString());
+		Assert.assertNotNull(template.getResources());
+		AWSEC2Instance awsec2Instance = (AWSEC2Instance) template.getEC2Instance();
+		Assert.assertNotNull(awsec2Instance.getProperties().getImageId());
+		List<VolumeMapping> volumes = awsec2Instance.getProperties().getVolumes();
+		Assert.assertNotNull(volumes);
+		Assert.assertFalse(volumes.isEmpty());
+		Assert.assertNotNull(volumes.get(0).getVolumeId());
+		String volumeName = volumes.get(0).getVolumeId().getValue();
+		Assert.assertNotNull((template.getEC2Volume(volumeName)).getProperties().getSize());
+	}
 
-    @Test
-    public void testProperties() throws Exception {
-        driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
-        driver.setCustomDataFile(new File("./cloudify/cfn-templates/sampleApplication"));
+	@Test
+	public void testProperties() throws Exception {
+		driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
+		driver.setCustomDataFile(new File("./src/test/resources/cfn_templates"));
 
-        PrivateEc2Template template = driver.getCFNTemplatePerService("someService");
-        ValueType imageId = template.getEC2Instance().getProperties().getImageId();
-        assertThat(imageId.getValue(), is("ami-23d9a94a"));
+		PrivateEc2Template template = driver.getCFNTemplatePerService("externalConfig");
+		ValueType imageId = template.getEC2Instance().getProperties().getImageId();
+		assertThat(imageId.getValue(), is("ami-23d9a94a"));
 
-        ValueType keyName = template.getEC2Instance().getProperties().getKeyName();
-        assertThat(keyName.getValue(), is("cloudify"));
-    }
+		ValueType keyName = template.getEC2Instance().getProperties().getKeyName();
+		assertThat(keyName.getValue(), is("cloudify"));
+	}
 
 }

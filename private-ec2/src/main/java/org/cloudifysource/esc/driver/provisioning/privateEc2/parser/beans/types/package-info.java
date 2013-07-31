@@ -13,25 +13,5 @@
 package org.cloudifysource.esc.driver.provisioning.privateEc2.parser.beans.types;
 
 /**
- * A bean for string values in Amazon CloudFormation templates.
- * 
- * @author victor
- * 
+ * Beans to handle values in the parsing of Amazon CloudFormation templates.
  */
-public class StringValue implements ValueType {
-
-	private final String value;
-
-	public StringValue(final String value) {
-		this.value = value;
-	}
-
-	public String getValue() {
-		return value.toString();
-	}
-
-	@Override
-	public String toString() {
-		return value;
-	}
-}
