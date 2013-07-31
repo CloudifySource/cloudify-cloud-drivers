@@ -34,6 +34,7 @@ import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.io.FileUtils;
 import org.cloudifysource.dsl.cloud.Cloud;
 import org.cloudifysource.dsl.cloud.CloudUser;
+import org.cloudifysource.dsl.cloud.ScriptLanguages;
 import org.cloudifysource.dsl.cloud.compute.ComputeTemplate;
 import org.cloudifysource.esc.driver.provisioning.CloudProvisioningException;
 import org.cloudifysource.esc.driver.provisioning.MachineDetails;
@@ -735,11 +736,8 @@ public class PrivateEC2CloudifyDriver extends DefaultProvisioningDriver {
 		if (properties.getUserData() != null) {
 			StringBuilder sb = new StringBuilder();
 
-			// Retrieve the MachineDetails of the manager
-			MachineDetails md = this.getManagementServersMachineDetails()[0];
-
 			// Generate ENV script for the provisioned machine
-			String script = this.generateCloudifyEnv(md);
+			String script = this.generateCloudifyEnv(cfnTemplate);
 
 			sb.append("#!/bin/bash\n");
 			sb.append(script).append("\n");
@@ -808,19 +806,19 @@ public class PrivateEC2CloudifyDriver extends DefaultProvisioningDriver {
 		return mapping;
 	}
 
-	private String generateCloudifyEnv(final MachineDetails md) throws CloudProvisioningException {
+	String generateCloudifyEnv(final PrivateEc2Template cfnTemplate) throws CloudProvisioningException {
 		ProvisioningContext ctx = new ProvisioningContextAccess().getProvisioiningContext();
 		ComputeTemplate template = new ComputeTemplate();
 		// FIXME may not work on windows because of script language
-		template.setScriptLanguage(md.getScriptLangeuage());
+		template.setScriptLanguage(ScriptLanguages.LINUX_SHELL);
 		try {
+			MachineDetails md = new MachineDetails();
+			md.setLocationId(this.getManagementServersMachineDetails()[0].getLocationId());
 			String script = ctx.createEnvironmentScript(md, template);
 			return script;
-
 		} catch (FileNotFoundException e) {
 			logger.log(Level.SEVERE, "Couldn't find file: ", e.getMessage());
 			throw new CloudProvisioningException(e);
 		}
 	}
-
 }

@@ -20,6 +20,10 @@
 			<id>org.cloudifysource</id>
 			<url>http://maven-repository.cloudifysource.org</url>
 		</repository>
+		<repository>
+			<id>openspaces</id>
+			<url>http://maven-repository.openspaces.org</url>
+		</repository>
 	</repositories>
 
 	<dependencies>

@@ -90,8 +90,7 @@ if [ -z "$GIGASPACES_AGENT_ENV_JAVA_URL" ]; then
 	else 
 		echo Unknown architecture -- $ARCH -- defaulting to 32 bit JDK
 		export GIGASPACES_AGENT_ENV_JAVA_URL=$JAVA_32_URL
-	fi
-	
+	fi	
 fi  
 
 if [ "$GIGASPACES_AGENT_ENV_JAVA_URL" = "NO_INSTALL" ]; then
