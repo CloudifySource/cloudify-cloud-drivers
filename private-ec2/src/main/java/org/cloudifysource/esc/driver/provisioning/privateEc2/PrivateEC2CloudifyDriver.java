@@ -737,7 +737,7 @@ public class PrivateEC2CloudifyDriver extends DefaultProvisioningDriver {
 			StringBuilder sb = new StringBuilder();
 
 			// Generate ENV script for the provisioned machine
-			String script = this.generateCloudifyEnv(cfnTemplate);
+			String script = this.generateCloudifyEnv();
 
 			sb.append("#!/bin/bash\n");
 			sb.append(script).append("\n");
@@ -806,7 +806,7 @@ public class PrivateEC2CloudifyDriver extends DefaultProvisioningDriver {
 		return mapping;
 	}
 
-	String generateCloudifyEnv(final PrivateEc2Template cfnTemplate) throws CloudProvisioningException {
+	private String generateCloudifyEnv() throws CloudProvisioningException {
 		ProvisioningContext ctx = new ProvisioningContextAccess().getProvisioiningContext();
 		ComputeTemplate template = new ComputeTemplate();
 		// FIXME may not work on windows because of script language
