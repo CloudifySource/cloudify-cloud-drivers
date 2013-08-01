@@ -17,7 +17,7 @@ cloud {
         className "org.cloudifysource.esc.driver.provisioning.privateEc2.PrivateEC2CloudifyDriver"
         storageClassName "org.cloudifysource.esc.driver.provisioning.storage.aws.EbsStorageDriver"
         // Optional. The template name for the management machines. Defaults to the first template in the templates section below.
-        managementMachineTemplate "MEDIUM_UBUNTU"   
+        managementMachineTemplate "CFN_MANAGER_TEMPLATE"   
     }
 
     /*************
@@ -86,31 +86,25 @@ cloud {
                 machineMemoryMB 2048   // must be bigger than reservedMemoryCapacityPerMachineInMB+100                
                 localDirectory "upload"
             },
-            MEDIUM_UBUNTU : computeTemplate{
-                imageId imageId
-                remoteDirectory "/home/ubuntu/gs-files"
-                machineMemoryMB 3700
-                hardwareId "m1.medium"
-                locationId locationId
-                localDirectory "upload"
-                
-                keyFile keyFile
-                username "ubuntu"
-                
-                options ([
-                            "securityGroups" : ["default"] as String[],
-                            "keyPair" : keyPair
-                        ])
-
-                overrides (["jclouds.ec2.ami-query":"",
-                            "jclouds.ec2.cc-ami-query":""])
-
-                //javaUrl "https://s3-eu-west-1.amazonaws.com/cloudify-eu/jdk-6u32-linux-x64.bin"
-                
-                // enable sudo.
-                privileged true
+            CFN_MANAGER_TEMPLATE : computeTemplate{
+                imageId ""             // For template validation, defined in CFN templates
+                hardwareId ""          // For template validation, defined in CFN templates
+                locationId locationId  // For template validation
+                machineMemoryMB 2048   // must be bigger than reservedMemoryCapacityPerMachineInMB+100                
+                localDirectory "./"
+				remoteDirectory "./"     // do not change, it is used to define $CLOUD_FILE
+				
+				custom ([
+					"cfnManagerTemplate":"../clouds/privateEc2/privateEc2-cfn.template",
+					"cloudDirectory":"C:/cloudify-deployment/gigaspaces-cloudify-2.6.1-ga-b5199-139/clouds/privateEc2",
+					"s3BucketName":"cloudify-eu/test",
+					"s3LocationId":"eu-west-1",
+					"cloudFileDir":"/home/ubuntu/gs-files"
+				])
+				
             },
         ])
     
     }
+	custom (["endpoint":"ec2.us-east-1.amazonaws.com"])
 }

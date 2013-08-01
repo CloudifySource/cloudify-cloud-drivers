@@ -19,7 +19,6 @@ import java.io.File;
 import java.util.List;
 import java.util.logging.Logger;
 
-import org.cloudifysource.esc.driver.provisioning.context.DefaultProvisioningDriverClassContext;
 import org.cloudifysource.esc.driver.provisioning.privateEc2.parser.beans.AWSEC2Instance;
 import org.cloudifysource.esc.driver.provisioning.privateEc2.parser.beans.AWSEC2Volume;
 import org.cloudifysource.esc.driver.provisioning.privateEc2.parser.beans.PrivateEc2Template;
@@ -41,7 +40,6 @@ public class PrivateEC2CloudifyDriverTest {
 
 	@Test
 	public void testGetDriverContextStatic() throws Exception {
-		driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
 		driver.setCustomDataFile(new File("./src/test/resources/cfn_templates/static-cfn.template"));
 		PrivateEc2Template template = (PrivateEc2Template) driver.getCFNTemplatePerService("static");
 		Assert.assertNotNull(template);
@@ -52,7 +50,6 @@ public class PrivateEC2CloudifyDriverTest {
 
 	@Test
 	public void testGetDriverContextStaticWithVolume() throws Exception {
-		driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
 		driver.setCustomDataFile(new File("./src/test/resources/cfn_templates/static-with-volume-cfn.template"));
 		PrivateEc2Template template = (PrivateEc2Template) driver.getCFNTemplatePerService("static-with-volume");
 		Assert.assertNotNull(template);
@@ -66,7 +63,6 @@ public class PrivateEC2CloudifyDriverTest {
 
 	@Test
 	public void testGetDriverContextFolder() throws Exception {
-		driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
 		driver.setCustomDataFile(new File("./src/test/resources/cfn_templates"));
 
 		String templateName = "static-with-volume";
@@ -75,7 +71,7 @@ public class PrivateEC2CloudifyDriverTest {
 		Assert.assertNotNull(template);
 		logger.info(template.toString());
 		Assert.assertNotNull(template.getResources());
-		AWSEC2Instance awsec2Instance = (AWSEC2Instance) template.getEC2Instance();
+		AWSEC2Instance awsec2Instance = template.getEC2Instance();
 		Assert.assertNotNull(awsec2Instance.getProperties().getImageId());
 		List<VolumeMapping> volumes = awsec2Instance.getProperties().getVolumes();
 		Assert.assertNotNull(volumes);
@@ -86,8 +82,20 @@ public class PrivateEC2CloudifyDriverTest {
 	}
 
 	@Test
+	public void testManagerCFN() throws Exception {
+		String managerCfnTemplateFile = "./cloudify/clouds/privateEc2/privateEc2-cfn.template";
+		PrivateEc2Template template = driver.getManagerPrivateEc2Template(managerCfnTemplateFile);
+		Assert.assertNotNull(template);
+		logger.info(template.toString());
+		Assert.assertNotNull(template.getResources());
+		AWSEC2Instance awsec2Instance = (AWSEC2Instance) template.getEC2Instance();
+		Assert.assertNotNull(awsec2Instance.getProperties().getImageId());
+		List<VolumeMapping> volumes = awsec2Instance.getProperties().getVolumes();
+		Assert.assertNull(volumes);
+	}
+
+	@Test
 	public void testProperties() throws Exception {
-		driver.setProvisioningDriverClassContext(new DefaultProvisioningDriverClassContext());
 		driver.setCustomDataFile(new File("./src/test/resources/cfn_templates"));
 
 		PrivateEc2Template template = driver.getCFNTemplatePerService("externalConfig");

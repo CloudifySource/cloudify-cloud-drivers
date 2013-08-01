@@ -33,23 +33,9 @@
 			<version>1.4.7</version>
 		</dependency>
 		<dependency>
-			<groupId>privateEc2</groupId>
-			<artifactId>privateEc2-parser</artifactId>
-			<version>1.0-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>commons-lang</groupId>
-					<artifactId>commons-lang</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>commons-io</groupId>
-					<artifactId>commons-io</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>commons-codec</groupId>
-					<artifactId>commons-codec</artifactId>
-				</exclusion>
-			</exclusions>
+			<groupId>de.idyl</groupId>
+			<artifactId>winzipaes</artifactId>
+			<version>1.0.1</version>
 		</dependency>
 
 		<!-- CLOUDIFY -->
@@ -170,8 +156,8 @@
 											<artifactId>aws-java-sdk</artifactId>
 										</artifactItem>
 										<artifactItem>
-											<groupId>privateEc2</groupId>
-											<artifactId>privateEc2-parser</artifactId>
+											<groupId>de.idyl</groupId>
+											<artifactId>winzipaes</artifactId>
 										</artifactItem>
 									</artifactItems>
 									<outputDirectory>${project.build.directory}</outputDirectory>
