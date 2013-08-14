@@ -91,15 +91,14 @@ cloud {
                 hardwareId ""          // For template validation, defined in CFN templates
                 locationId locationId  // For template validation
                 machineMemoryMB 2048   // must be bigger than reservedMemoryCapacityPerMachineInMB+100                
-                localDirectory "./"
-				remoteDirectory "./"     // do not change, it is used to define $CLOUD_FILE
+                localDirectory "upload"
+				remoteDirectory "/home/ubuntu/gs-files"     // do not change, it is used to define $CLOUD_FILE
 				
 				custom ([
-					"cfnManagerTemplate":"../clouds/privateEc2/privateEc2-cfn.template",
+					"cfnManagerTemplate":"C:/cloudify-deployment/gigaspaces-cloudify-2.6.1-ga-b5199-139/clouds/privateEc2/privateEc2-cfn.template",
 					"cloudDirectory":"C:/cloudify-deployment/gigaspaces-cloudify-2.6.1-ga-b5199-139/clouds/privateEc2",
 					"s3BucketName":"cloudify-eu/test",
 					"s3LocationId":"eu-west-1",
-					"cloudFileDir":"/home/ubuntu/gs-files"
 				])
 				
             },

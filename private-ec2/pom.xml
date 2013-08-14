@@ -13,6 +13,7 @@
 		<cloudifyVersion>2.6.1-SNAPSHOT</cloudifyVersion>
 		<openspacesVersion>9.6.0-SNAPSHOT</openspacesVersion>
 		<junitVersion>4.8.2</junitVersion>
+		<cloudify.home>${env.CLOUDIFY_DIR}</cloudify.home>
 	</properties>
 
 	<repositories>
@@ -31,12 +32,7 @@
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk</artifactId>
 			<version>1.4.7</version>
-		</dependency>
-		<dependency>
-			<groupId>de.idyl</groupId>
-			<artifactId>winzipaes</artifactId>
-			<version>1.0.1</version>
-		</dependency>
+		</dependency> 
 
 		<!-- CLOUDIFY -->
 		<dependency>
@@ -106,9 +102,6 @@
 	<profiles>
 		<profile>
 			<id>cloudify</id>
-			<properties>
-				<cloudifyDir>${env.CLOUDIFY_DIR}</cloudifyDir>
-			</properties>
 			<build>
 				<plugins>
 					<plugin>
@@ -121,13 +114,13 @@
 								<phase>package</phase>
 								<configuration>
 									<tasks>
-										<copy todir="${cloudifyDir}">
+										<copy todir="${cloudify.home}">
 											<fileset dir="${project.basedir}/cloudify" includes="**/*" />
 										</copy>
-										<copy todir="${cloudifyDir}/lib/platform/esm">
+										<copy todir="${cloudify.home}/lib/platform/esm">
 											<fileset dir="${project.build.directory}" includes="*.jar" />
 										</copy>
-										<copy todir="${cloudifyDir}/clouds/privateEc2/upload/cloudify-overrides/lib/platform/esm">
+										<copy todir="${cloudify.home}/clouds/privateEc2/upload/cloudify-overrides/lib/platform/esm">
 											<fileset dir="${project.build.directory}" includes="*.jar" />
 										</copy>
 									</tasks>
@@ -154,10 +147,6 @@
 										<artifactItem>
 											<groupId>com.amazonaws</groupId>
 											<artifactId>aws-java-sdk</artifactId>
-										</artifactItem>
-										<artifactItem>
-											<groupId>de.idyl</groupId>
-											<artifactId>winzipaes</artifactId>
 										</artifactItem>
 									</artifactItems>
 									<outputDirectory>${project.build.directory}</outputDirectory>

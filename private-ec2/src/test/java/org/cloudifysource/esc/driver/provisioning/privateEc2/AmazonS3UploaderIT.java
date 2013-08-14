@@ -34,32 +34,23 @@ public class AmazonS3UploaderIT {
 	}
 
 	@Test
-	public void testUploadFileMultipart() throws Exception {
-		this.s3Uploader.uploadFileMultipart("cloudify-eu/test", "./privateEc2.zip");
-	}
-
-	@Test
 	public void testUploadFile() throws Exception {
-		// String uploadFile = this.s3Uploader.uploadFile("cloudify-eu/test", new File("./privateEc2-protected.zip"));
-		String uploadFile = this.s3Uploader.uploadFile("cloudify-eu/test", new File("./privateEc2-protected.zip"));
-
+		String uploadFile = this.s3Uploader.uploadFile("cloudify-eu/test2", new File("./privateEc2.zip"));
 		System.out.println(uploadFile);
 	}
 
 	@Test
 	public void testZipFolder() throws Exception {
-		File zipFile = this.s3Uploader.zipFolder("./privateEc2.zip", "test");
+		File zipFile = this.s3Uploader
+				.zipFolder("C:/cloudify-deployment/gigaspaces-cloudify-2.6.1-ga-b5199-139/clouds/privateEc2");
 		System.out.println(zipFile);
 	}
 
 	@Test
 	public void testZipAndUploadToS3() throws Exception {
-		String s3File =
-				this.s3Uploader
-						.zipAndUploadToS3(
-								"cloudify-eu/test",
-								"C:/cloudify-deployment/gigaspaces-cloudify-2.6.1-ga-b5199-139/clouds/privateEc2",
-								"test112");
+		String s3File = this.s3Uploader.zipAndUploadToS3(
+				"cloudify-eu/test",
+				"C:/cloudify-deployment/gigaspaces-cloudify-2.6.1-ga-b5199-139/clouds/privateEc2");
 		System.out.println(s3File);
 	}
 

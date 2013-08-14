@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -429,14 +428,6 @@ public class PrivateEC2CloudifyDriver extends CloudDriverSupport implements
 					+ " serverIp=" + serverIp);
 		}
 
-		boolean stopped = false;
-		stopped = this.stopMachineWithAmazonSDK(serverIp, duration, unit);
-		return stopped;
-	}
-
-	boolean stopMachineWithAmazonSDK(final String serverIp, final long duration, final TimeUnit unit)
-			throws CloudProvisioningException,
-			TimeoutException {
 		logger.info("Stopping instance server ip = " + serverIp + "...");
 		DescribeInstancesRequest describeInstance = new DescribeInstancesRequest();
 		describeInstance.withFilters(new Filter("private-ip-address", Arrays.asList(serverIp)));
@@ -521,8 +512,7 @@ public class PrivateEC2CloudifyDriver extends CloudDriverSupport implements
 	private MachineDetails createServer(final PrivateEc2Template cfnTemplate, final String machineName,
 			final ProvisioningContextImpl ctx, final boolean management, final long duration, final TimeUnit unit)
 			throws CloudProvisioningException, TimeoutException {
-		Instance ec2Instance = this.createEC2Instance(cfnTemplate, ctx, management);
-		ec2Instance = this.waitRunningInstance(ec2Instance, duration, unit);
+		Instance ec2Instance = this.createEC2Instance(cfnTemplate, ctx, management, duration, unit);
 		this.tagEC2Instance(ec2Instance, machineName, cfnTemplate.getEC2Instance());
 		this.tagEC2Volumes(ec2Instance.getInstanceId(), cfnTemplate);
 
@@ -750,12 +740,19 @@ public class PrivateEC2CloudifyDriver extends CloudDriverSupport implements
 	}
 
 	private Instance createEC2Instance(final PrivateEc2Template cfnTemplate, final ProvisioningContextImpl ctx,
-			final boolean management) throws CloudProvisioningException, TimeoutException {
+			final boolean management, final long duration, final TimeUnit unit) throws CloudProvisioningException,
+			TimeoutException {
 		String cloudFileS3 = null;
-		String archivePassword = UUID.randomUUID().toString();
 		if (management) {
 			try {
-				cloudFileS3 = this.uploadCloudFile(archivePassword);
+				CloudUser user = this.cloud.getUser();
+				ComputeTemplate template = this.getManagerComputeTemplate();
+				String cloudDirectory = (String) template.getCustom().get("cloudDirectory");
+				String s3BucketName = (String) template.getCustom().get("s3BucketName");
+				String locationId = (String) template.getCustom().get("s3LocationId");
+
+				AmazonS3Uploader amazonS3Uploader = new AmazonS3Uploader(user.getUser(), user.getApiKey(), locationId);
+				cloudFileS3 = amazonS3Uploader.zipAndUploadToS3(s3BucketName, cloudDirectory);
 			} catch (IOException e) {
 				throw new CloudProvisioningException(e);
 			}
@@ -788,29 +785,30 @@ public class PrivateEC2CloudifyDriver extends CloudDriverSupport implements
 				script = this.generateCloudifyEnv(ctx);
 			}
 
+			if (logger.isLoggable(Level.FINEST)) {
+				logger.finest("Generated Management Script:\n" + script);
+			}
+
 			sb.append("#!/bin/bash\n");
 			sb.append(script).append("\n");
 			if (management) {
 				ComputeTemplate template = this.getManagerComputeTemplate();
-				String cloudFileDir = (String) template.getCustom().get("cloudFileDir");
+				String cloudFileDir = (String) template.getRemoteDirectory();
 				if (cloudFileDir.length() > 1 && cloudFileDir.endsWith("/")) {
 					cloudFileDir = cloudFileDir.substring(0, cloudFileDir.length() - 1);
 				}
-				String endOfLine = ">> /tmp/cloud.txt\n";
-				sb.append("export WORKING_HOME_DIRECTORY=/tmp").append(endOfLine);
-				sb.append("export S3_ZIP_FILE=" + cloudFileS3).append(endOfLine);
-				sb.append("export S3_ZIP_PWD=" + archivePassword).append(endOfLine);
-				sb.append("wget -q -O $WORKING_HOME_DIRECTORY/cloudArchive.zip $S3_ZIP_FILE").append(endOfLine);
+				String endOfLine = " >> /tmp/cloud.txt\n";
+				sb.append("export TMP_DIRECTORY=/tmp").append(endOfLine);
+				sb.append("export S3_ZIP_FILE='" + cloudFileS3 + "'").append(endOfLine);
+				sb.append("wget -q -O $TMP_DIRECTORY/cloudArchive.zip $S3_ZIP_FILE").append(endOfLine);
 				sb.append("mkdir -p " + cloudFileDir).append(endOfLine);
 				sb.append("apt-get update").append(endOfLine);
-				sb.append("apt-get install p7zip").append(endOfLine);
-				sb.append("apt-get install p7zip-full").append(endOfLine);
-				sb.append("7z x -y -p$S3_ZIP_PWD -o" + cloudFileDir)
-						.append(" $WORKING_HOME_DIRECTORY/cloudArchive.zip").append(endOfLine);
-				sb.append("export CLOUD_FILE=" + cloudFileDir + "/$CLOUD_FILE").append(endOfLine);
+				sb.append("apt-get install unzip").append(endOfLine);
+				sb.append("unzip $TMP_DIRECTORY/cloudArchive.zip -d " + cloudFileDir).append(endOfLine);
+				sb.append("rm -f $TMP_DIRECTORY/cloudArchive.zip").append(endOfLine);
 				// TODO retrieve port dynamically for LUS_IP_ADDRESS
-				sb.append("export LUS_IP_ADDRESS=`curl http://instance-data/latest/meta-data/local-ipv4`:4174")
-						.append(endOfLine);
+				sb.append("export LUS_IP_ADDRESS=`curl http://instance-data/latest/meta-data/local-ipv4`:4174").append(
+						endOfLine);
 
 			}
 			sb.append(properties.getUserData().getValue());
@@ -825,7 +823,8 @@ public class PrivateEC2CloudifyDriver extends CloudDriverSupport implements
 			blockDeviceMappings = new ArrayList<BlockDeviceMapping>(properties.getVolumes().size());
 			for (VolumeMapping volMapping : properties.getVolumes()) {
 				volumeConfig = cfnTemplate.getEC2Volume(volMapping.getVolumeId().getValue());
-				blockDeviceMappings.add(this.createBlockDeviceMapping(volMapping.getDevice().getValue(), volumeConfig));
+				blockDeviceMappings.add(this.createBlockDeviceMapping(volMapping.getDevice().getValue(),
+						volumeConfig));
 			}
 		}
 
@@ -851,19 +850,10 @@ public class PrivateEC2CloudifyDriver extends CloudDriverSupport implements
 			throw new CloudProvisioningException("Request runInstace fails (request=" + runInstancesRequest + ").");
 		}
 
-		return runInstances.getReservation().getInstances().get(0);
-	}
+		Instance ec2Instance = runInstances.getReservation().getInstances().get(0);
+		ec2Instance = this.waitRunningInstance(ec2Instance, duration, unit);
 
-	private String uploadCloudFile(final String archivePassword) throws IOException {
-		CloudUser user = this.cloud.getUser();
-		ComputeTemplate template = this.getManagerComputeTemplate();
-		String cloudDirectory = (String) template.getCustom().get("cloudDirectory");
-		String s3BucketName = (String) template.getCustom().get("s3BucketName");
-		String locationId = (String) template.getCustom().get("s3LocationId");
-
-		AmazonS3Uploader amazonS3Uploader = new AmazonS3Uploader(user.getUser(), user.getApiKey(), locationId);
-		String url = amazonS3Uploader.zipAndUploadToS3(s3BucketName, cloudDirectory, archivePassword);
-		return url;
+		return ec2Instance;
 	}
 
 	private BlockDeviceMapping createBlockDeviceMapping(final String device, final AWSEC2Volume volumeConfig)
@@ -897,7 +887,7 @@ public class PrivateEC2CloudifyDriver extends CloudDriverSupport implements
 		template.setRemoteDirectory("");
 		try {
 			MachineDetails machineDetails = new MachineDetails();
-			machineDetails.setRemoteDirectory("");
+			machineDetails.setRemoteDirectory(getManagerComputeTemplate().getRemoteDirectory());
 			MachineDetails[] mds = { machineDetails };
 			// As every specific environment variables will be set with user data we don't need to generate a script per
 			// management machine.
@@ -1100,6 +1090,9 @@ public class PrivateEC2CloudifyDriver extends CloudDriverSupport implements
 		}
 		TerminateInstancesRequest terminateInstancesRequest = new TerminateInstancesRequest();
 		terminateInstancesRequest.setInstanceIds(ids);
+
+		logger.info("Terminating management instances... " + terminateInstancesRequest);
+		ec2.terminateInstances(terminateInstancesRequest);
 	}
 
 	@Override
