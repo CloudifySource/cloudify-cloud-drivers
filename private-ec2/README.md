@@ -1,6 +1,6 @@
 # Private EC2 Cloud Driver
 
-> This cloud driver has been tested with Cloudify 2.6.1 build 5199-71 available for download [here](https://s3-eu-west-1.amazonaws.com/cloudify-eu/gigaspaces-cloudify-2.6.1-ga-b5199-139.zip)
+> This cloud driver has been tested with Cloudify 2.6.1-b5199-139 available for download [here](https://s3-eu-west-1.amazonaws.com/cloudify-eu/gigaspaces-cloudify-2.6.1-ga-b5199-139.zip)
 
 # Installation
 
