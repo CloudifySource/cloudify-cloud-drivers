@@ -33,7 +33,6 @@
           "export CLOUDIFY_AGENT_ENV_PUBLIC_IP=`curl http://instance-data/latest/meta-data/public-ipv4`",
           "export NIC_ADDR=`hostname`",
           "export WORKING_HOME_DIRECTORY=/mnt/cloudify",
-          "export JAVA_HOME=/home/ubuntu/java",
           "export LOOKUPLOCATORS=$LUS_IP_ADDRESS",
           "echo installing jdk",
           "wget -q -O $WORKING_HOME_DIRECTORY/java.bin https://s3-eu-west-1.amazonaws.com/cloudify-eu/jdk-6u32-linux-x64.bin",
