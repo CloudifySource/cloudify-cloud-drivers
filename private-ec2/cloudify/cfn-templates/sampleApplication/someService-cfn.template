@@ -1,0 +1,85 @@
+{
+  "Resources":{
+    "someService":{
+      "Type":"AWS::EC2::Instance",
+      "Properties":{
+        "ImageId":imageId,
+        "InstanceType":"m1.medium",
+        "SecurityGroups":["default"], 
+        "KeyName":keyName,
+        "Volumes":[{ 
+          "VolumeId":{"Ref" : "smallVolume"},
+          "Device":"/dev/sdk"
+        },{ 
+          "VolumeId":{"Ref" : "smallEbs"},
+          "Device":"/dev/sdj"
+        }],
+        "Tags":[
+          {"Key":"Instance","Value": "someInstanceTag"}
+        ], 
+        "UserData": { "Fn::Join" : [" >> /home/ubuntu/output.txt\n", [
+          "mkfs -t ext4 /dev/xvdk",
+          "mkfs -t ext4 /dev/xvdj",
+          "mkdir -p /mnt/cloudify",
+          "mkdir -p /mnt/cloudify-bis",
+          "mount /dev/xvdj /mnt/cloudify",
+          "mount /dev/xvdk /mnt/cloudify-bis",
+          "export MACHINE_IP_ADDRESS=`curl http://instance-data/latest/meta-data/local-ipv4`",
+          "export GIGASPACES_CLOUD_MACHINE_ID=`curl http://169.254.169.254/latest/meta-data/instance-id`",
+          "export GIGASPACES_AGENT_ENV_PRIVATE_IP=`curl http://instance-data/latest/meta-data/local-ipv4`",
+          "export GIGASPACES_AGENT_ENV_PUBLIC_IP=`curl http://instance-data/latest/meta-data/public-ipv4`",
+          "export CLOUDIFY_CLOUD_MACHINE_ID=`curl http://169.254.169.254/latest/meta-data/instance-id`",
+          "export CLOUDIFY_AGENT_ENV_PRIVATE_IP=`curl http://instance-data/latest/meta-data/local-ipv4`",
+          "export CLOUDIFY_AGENT_ENV_PUBLIC_IP=`curl http://instance-data/latest/meta-data/public-ipv4`",
+          "export NIC_ADDR=`hostname`",
+          "export WORKING_HOME_DIRECTORY=/mnt/cloudify",
+          "export LOOKUPLOCATORS=$LUS_IP_ADDRESS",
+          "echo installing jdk",
+          "wget -q -O $WORKING_HOME_DIRECTORY/java.bin https://s3-eu-west-1.amazonaws.com/cloudify-eu/jdk-6u32-linux-x64.bin",
+          "chmod +x $WORKING_HOME_DIRECTORY/java.bin",
+          "echo -e \"\n\" > $WORKING_HOME_DIRECTORY/input.txt",
+          "rm -rf $WORKING_HOME_DIRECTORY/java",
+          "mkdir $WORKING_HOME_DIRECTORY/java",
+          "cd $WORKING_HOME_DIRECTORY/java",
+          "$WORKING_HOME_DIRECTORY/java.bin < $WORKING_HOME_DIRECTORY/input.txt > /dev/null",
+          "mv $WORKING_HOME_DIRECTORY/java/*/* $WORKING_HOME_DIRECTORY/java",
+          "export JAVA_HOME=$WORKING_HOME_DIRECTORY/java",
+          "echo apt-get unzip",
+          "apt-get update",
+          "apt-get install unzip",
+          "echo installing gigaspaces",
+          "wget -q -O $WORKING_HOME_DIRECTORY/gigaspaces.zip https://s3-eu-west-1.amazonaws.com/cloudify-eu/gigaspaces-cloudify-2.6.1-ga-b5199-139.zip",
+          "unzip $WORKING_HOME_DIRECTORY/gigaspaces.zip -d $WORKING_HOME_DIRECTORY",
+          "mv $WORKING_HOME_DIRECTORY/gigaspaces-cloudify-2.6.1-ga* $WORKING_HOME_DIRECTORY/gigaspaces",
+          "rm -f $WORKING_HOME_DIRECTORY/input.txt",
+          "rm -f $WORKING_HOME_DIRECTORY/gigaspaces.zip",
+          "rm -f $WORKING_HOME_DIRECTORY/java.bin",
+          "chmod -R 755 $WORKING_HOME_DIRECTORY/java",
+          "chmod -R 755 $WORKING_HOME_DIRECTORY/gigaspaces",
+          "chown -hR ubuntu /mnt/cloudify/",
+          "chown -hR ubuntu /mnt/cloudify-bis/",
+          "nohup $WORKING_HOME_DIRECTORY/gigaspaces/bin/cloudify.sh start-agent -timeout 30 --verbose"
+        ]]} 
+      }
+    },
+	  "smallVolume":{
+      "Type":"AWS::EC2::Volume",
+      "Properties":{
+	      "Size":"1",
+        "Tags":[
+          {"Key":"Volume1","Value":"someVolumeTag1"},
+          {"Key":"Volume2","Value":"someVolumeTag2"}
+        ] 
+	    }
+	  },
+    "smallEbs":{
+      "Type":"AWS::EC2::Volume",
+      "Properties":{
+        "Size":"1",
+        "Tags":[
+          {"Key":"Volume1","Value":"someEbsTag1"}
+        ] 
+      }
+    }
+  }   
+}

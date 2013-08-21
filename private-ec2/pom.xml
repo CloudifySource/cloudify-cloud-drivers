@@ -1,0 +1,161 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>privateEc2</groupId>
+	<artifactId>privateEc2</artifactId>
+	<version>1.0-SNAPSHOT</version>
+
+	<name>privateEc2</name>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<compiler.source-version>1.6</compiler.source-version>
+		<complier.target-version>1.6</complier.target-version>
+		<cloudifyVersion>2.6.1-SNAPSHOT</cloudifyVersion>
+		<openspacesVersion>9.6.0-SNAPSHOT</openspacesVersion>
+		<junitVersion>4.8.2</junitVersion>
+		<cloudify.home>${env.CLOUDIFY_DIR}</cloudify.home>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>org.cloudifysource</id>
+			<url>http://maven-repository.cloudifysource.org</url>
+		</repository>
+		<repository>
+			<id>openspaces</id>
+			<url>http://maven-repository.openspaces.org</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.amazonaws</groupId>
+			<artifactId>aws-java-sdk</artifactId>
+			<version>1.4.7</version>
+		</dependency> 
+
+		<!-- CLOUDIFY -->
+		<dependency>
+			<groupId>org.cloudifysource</groupId>
+			<artifactId>esc</artifactId>
+			<version>${cloudifyVersion}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.cloudifysource</groupId>
+			<artifactId>dsl</artifactId>
+			<version>${cloudifyVersion}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.gigaspaces</groupId>
+			<artifactId>gs-openspaces</artifactId>
+			<version>${openspacesVersion}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>13.0</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- TESTING -->
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>${junitVersion}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.codehaus.groovy</groupId>
+			<artifactId>groovy</artifactId>
+			<version>1.8.6</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>net.schmizz</groupId>
+			<artifactId>sshj</artifactId>
+			<version>0.8.1</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<source>${compiler.source-version}</source>
+					<target>${complier.target-version}</target>
+					<compilerArgument>-Xlint:all</compilerArgument>
+					<showWarnings>true</showWarnings>
+					<showDeprecation>true</showDeprecation>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+
+	<profiles>
+		<profile>
+			<id>cloudify</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-antrun-plugin</artifactId>
+						<version>1.7</version>
+						<executions>
+							<execution>
+								<id>copy-to-cloudify</id>
+								<phase>package</phase>
+								<configuration>
+									<tasks>
+										<copy todir="${cloudify.home}">
+											<fileset dir="${project.basedir}/cloudify" includes="**/*" />
+										</copy>
+										<copy todir="${cloudify.home}/lib/platform/esm">
+											<fileset dir="${project.build.directory}" includes="*.jar" />
+										</copy>
+										<copy todir="${cloudify.home}/clouds/privateEc2/upload/cloudify-overrides/lib/platform/esm">
+											<fileset dir="${project.build.directory}" includes="*.jar" />
+										</copy>
+									</tasks>
+								</configuration>
+								<goals>
+									<goal>run</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-dependency-plugin</artifactId>
+						<!-- <version>2.8</version> -->
+						<executions>
+							<execution>
+								<id>copy-aws</id>
+								<phase>compile</phase>
+								<goals>
+									<goal>copy</goal>
+								</goals>
+								<configuration>
+									<artifactItems>
+										<artifactItem>
+											<groupId>com.amazonaws</groupId>
+											<artifactId>aws-java-sdk</artifactId>
+										</artifactItem>
+									</artifactItems>
+									<outputDirectory>${project.build.directory}</outputDirectory>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+</project>
