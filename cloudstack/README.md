@@ -1,28 +1,25 @@
- CloudStack Sudoer Cloud Driver ( for CentOs ) 
+CloudStack 4.x Cloud Driver 
 
-This cloud driver disables the requiretty flag in /etc/sudoers, so that Cloudify will be able to invoke remote ssh commands as a sudoer. This feature will be a part of Cloudify in the near future.
-
-> This cloud driver has been tested with Cloudify 2.3.0 M1 available for download [here](http://repository.cloudifysource.org/org/cloudifysource/2.3.0-M1/gigaspaces-cloudify-2.3.0-m1-b3481.zip)
+This cloud driver has been tested with Cloudify 2.7.0 available for download [here](http://cloudifysource.org/http://www.cloudifysource.org/downloads/get_cloudify).
 
 # Installation 
 
 To install this driver following the following steps (make sure you have git client installed): 
 
 * Clone the repo and copy the cloud driver folder to the right location in the cloudify distro: 
-<pre><code>
+```
 git clone git@github.com:CloudifySource/cloudify-cloud-drivers.git
-cp -r cloudstack/ <cloudify root>/tools/cli/plugins/esc
-</code></pre>
-
+cp -r cloudstack/ <cloudify root>/clouds
+```
 * Edit the file `cloudstack-cloud.properties` and add your cloud credentials instead of the place holders
 
 * Bootstrap the cloud: 
-<pre><code>
+```
 cd <cloudify root>/bin
 ./cloudify.sh
-</code></pre>
+```
 
-<pre><code>
+```
 
   .oooooo.   oooo                              .o8   o8o   .o88o.             
  d8P'  `Y8b  `888                             "888   `"'   888 `"             
@@ -45,9 +42,9 @@ Hit '<tab>' for a list of available commands.
 Hit '[cmd] --help' for help on a specific command.
 Hit '<ctrl-d>' or 'exit' to exit the console.
 
-Cloudify version: 2.3.0
+Cloudify version: 2.7.0
 
 
 cloudify@default> bootstrap-cloud -timeout 20 cloudstack
-</code></pre>
+```
 

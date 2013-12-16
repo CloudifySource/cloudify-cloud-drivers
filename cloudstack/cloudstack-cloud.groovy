@@ -1,65 +1,109 @@
-/*******************************************************************************
-* Copyright (c) 2012 GigaSpaces Technologies Ltd. All rights reserved
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*       http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*******************************************************************************/
 cloud {
 	name = "cloudstack"
+
+	/********
+	 * General configuration information about the cloud driver implementation.
+	 */
 	configuration {
+
+		// Optional. The cloud implementation class. Defaults to the build in jclouds-based provisioning driver.
 		className "org.cloudifysource.esc.driver.provisioning.jclouds.DefaultProvisioningDriver"
+		// Optional. The template name for the management machines. Defaults to the first template in the templates section below.
 		managementMachineTemplate "SMALL_LINUX"
-		connectToPrivateIp false
-		bootstrapManagementOnPublicIp true
+		// Optional. Indicates whether internal cluster communications should use the machine private IP. Defaults to true.
+		connectToPrivateIp true
+		bootstrapManagementOnPublicIp false
+		// Path to folder where management state will be written.
+		persistentStoragePath persistencePath
 	}
 
+	/*************
+	 * Provider specific information.
+	 */
 	provider {
+
 		provider "cloudstack"
-//		cloudifyUrl "http://repository.cloudifysource.org/org/cloudifysource/2.3.0-M1/gigaspaces-cloudify-2.3.0-m1-b3481" 
-		machineNamePrefix INSTANCE_NAME_PREFIX		
-		dedicatedManagementMachines true
-		managementOnlyFiles ([])		
 
+		cloudifyUrl cloudifyUrl
+
+		machineNamePrefix "cloudify-agent-"
+		// Optional. Defaults to true. Specifies whether cloudify should try to deploy services on the management machine.
+		// Do not change this unless you know EXACTLY what you are doing.
+		managementOnlyFiles ([])
+
+		// Optional. Logging level for the intenal cloud provider logger. Defaults to INFO.
 		sshLoggingLevel "WARNING"
-		managementGroup MANAGEMENT_NAME_PREFIX
+
+		// Mandatory. Name of the new machine/s started as cloudify management machines. Names are case-insensitive.
+		managementGroup "cloudify-manager-"
+		// Mandatory. Number of management machines to start on bootstrap-cloud. In production, should be 2. Can be 1 for dev.
 		numberOfManagementMachines 1
-		reservedMemoryCapacityPerMachineInMB 1024
-		
+
+		reservedMemoryCapacityPerMachineInMB 448 
+
 	}
-	
+
+	/*************
+	 * Cloud authentication information
+	 */
 	user {
-		user CLOUDSTACK_API_KEY
-		apiKey CLOUDSTACK_SECRET_KEY
+		apiKey secretKey
+		user apiKey
 	}
-	
-	templates ([
-				SMALL_LINUX : template{            
-					imageId SMALL_LINUX_IMAGE_ID
-					hardwareId SMALL_LINUX_HARDWARE_ID
-					machineMemoryMB 1600
-					locationId SMALL_LINUX_LOCATION_ID
-					remoteDirectory "/root/gs-files"
-					localDirectory "upload"
-					username SMALL_LINUX_SSH_USER_NAME
 
-					options   ([ 
-						"networkId" : SMALL_LINUX_NETWORK_ID ,
-						"setupStaticNat" : false
-					])
+	cloudCompute {
+		/***********
+		 * Cloud machine templates available with this cloud.
+		 */
+		templates ([
 
-					overrides (["jclouds.endpoint" : CLOUDSTACK_ENDPOINT])
-					privileged true
-				}				
-	])
+			SMALL_LINUX : computeTemplate{
+				locationId linuxImageIdDestinationManagement
+				// Mandatory. Image ID.
+				imageId linuxImageId
+				// Mandatory. Files from the local directory will be copied to this directory on the remote machine.
+				remoteDirectory remoteUploadDirectory
+				// Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
+				localDirectory localUploadDirectory
+				// Mandatory. Amount of RAM available to machine.
+				machineMemoryMB 1600 
+				// Mandatory. Hardware ID.
+				hardwareId hardwareId
+				
+				username userName
+				
+				password password
+				
+				javaUrl "http://repository.cloudifysource.org/com/oracle/java/1.6.0_32/jdk-6u32-linux-x64.bin"
+				
+				privileged true
+
+				overrides ([
+					"securityGroups" : [defaultSecurityGroup] as String[],
+					//"diskOfferingsId":["c870503d-d0f2-4e0d-b62c-1303b7411850"],
+					"jclouds.endpoint" : jcloudsEndpoint
+				])
+				options ([
+
+					"networkId" : networkId,
+					"setupStaticNat" : false
+
+				])
+				installer {
+					connectionTestRouteResolutionTimeoutMillis 120000
+					connectionTestIntervalMillis 5000
+					connectionTestConnectTimeoutMillis 10000
+
+					fileTransferConnectionTimeoutMillis 10000
+					fileTransferRetries 2
+					//fileTransferPort -1
+					fileTransferConnectionRetryIntervalMillis 5000
+
+					//remoteExecutionPort -1
+					remoteExecutionConnectionTimeoutMillis 10000
+				}
+			}
+		])
+	}
 }
-
 

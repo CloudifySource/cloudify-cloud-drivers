@@ -9,112 +9,219 @@
 #   $GSA_MODE - 'agent' if this node should join an already running node. Otherwise, any value.
 #	$NO_WEB_SERVICES - 'true' if web-services (rest, webui) should not be deployed (only if GSA_MODE != 'agent')
 #   $MACHINE_IP_ADDRESS - The IP of this server (Useful if multiple NICs exist)
-#	$MACHINE_ZONES - This is required if this is not a management machine
 # 	$WORKING_HOME_DIRECTORY - This is where the files were copied to (cloudify installation, etc..)
-#	$CLOUDIFY_LINK - If this url is found, it will be downloaded to $WORKING_HOME_DIRECTORY/gigaspaces.zip
-#	$CLOUDIFY_OVERRIDES_LINK - If this url is found, it will be downloaded and unzipped into the same location as cloudify
+#	$GIGASPACES_LINK - If this url is found, it will be downloaded to $WORKING_HOME_DIRECTORY/gigaspaces.zip
+#	$GIGASPACES_OVERRIDES_LINK - If this url is found, it will be downloaded and unzipped into the same location as cloudify
 #	$CLOUD_FILE - Location of the cloud configuration file. Only available in bootstrap of management machines.
 #	$NO_WEB_SERVICES - If set to 'true', indicates that the rest and web-ui services should not be deployed in this machine.
-#	$CLOUDIFY_CLOUD_IMAGE_ID - If set, indicates the image ID for this machine.
-#	$CLOUDIFY_CLOUD_HARDWARE_ID - If set, indicates the hardware ID for this machine.
+#	$GIGASPACES_CLOUD_IMAGE_ID - If set, indicates the image ID for this machine.
+#	$GIGASPACES_CLOUD_HARDWARE_ID - If set, indicates the hardware ID for this machine.
 #	$PASSWORD - the machine password
 #############################################################################
 
 # args:
-# $1 the error code of the last command (should be explicitly passed)
-# $2 the message to print in case of an error
+# $2 the error code of the last command (should be explicitly passed)
+# $3 the message to print in case of an error
 # 
 # an error message is printed and the script exists with the provided error code
 function error_exit {
-	echo "$2 : error code: $1"
-	exit ${1}
+	echo "$3 : error code: $2"
+	exit ${2}
 }
-
-function int-ip { 
-	/sbin/ifconfig $1 | grep "inet addr" | awk -F: '{print $2}' | awk '{print $1}'; 
-}
-
 
 # args:
 # $1 the error code of the last command (should be explicitly passed)
 # $2 the message to print in case of an error 
 # $3 the threshold to exit on
 #
-# if (last_error_code [$1]) >= (threshold [$3]) the provided message[$2] is printed and the script
-# exists with the provided error code ($1)
+# if (last_error_code [$1]) >= (threshold [$4]) (defaults to 0), the script
+# exits with the provided error code [$2] and the provided message [$3] is printed
 function error_exit_on_level {
-	if [ ${1} -ge ${3} ]; then
-		error_exit ${1} ${2}
+	if [ ${1} -ge ${4} ]; then
+		error_exit ${2} ${3}
 	fi
 }
 
+# args:
+# $1 the name of the script. must be located in the upload folder.
+function run_script {
+    FULL_PATH_TO_SCRIPT="$WORKING_HOME_DIRECTORY/$1.sh"
+    if [ -f $FULL_PATH_TO_SCRIPT ]; then
+        chmod +x $FULL_PATH_TO_SCRIPT
+        echo Running script $FULL_PATH_TO_SCRIPT
+        $FULL_PATH_TO_SCRIPT
+        RETVAL=$?
+        if [ $RETVAL -ne 0 ]; then
+          error_exit $RETVAL "Failed running $1 script"
+        fi
+    fi
+}
+
+echo Loading Cloudify Environment
+SCRIPT=`readlink -f $0`
+SCRIPTPATH=`dirname $SCRIPT`
+echo script path is $SCRIPTPATH
+
+if [ -f ${SCRIPTPATH}/cloudify_env.sh ]; then
+	ENV_FILE_PATH=${SCRIPTPATH}/cloudify_env.sh
+else
+	if [ -f ${SCRIPTPATH}/../cloudify_env.sh ]; then
+		ENV_FILE_PATH=${SCRIPTPATH}/../cloudify_env.sh
+	else
+		error_exit 100 "Cloudify environment file not found! Bootstrapping cannot proceed!"
+	fi
+
+fi
+
+source ${ENV_FILE_PATH}
+
+# Priviliged Script execution
+###############################
+echo CLOUDIFY_OPEN_FILES_LIMIT is $CLOUDIFY_OPEN_FILES_LIMIT 
+
+if [ -f ${WORKING_HOME_DIRECTORY}/break.bin ] 
+then
+	echo "Exiting due to break file detected"
+	exit 0
+fi
+
+function privilegedActions {
+	echo Executing priviliged bootstrap actions
+	if [ ! -z $CLOUDIFY_OPEN_FILES_LIMIT ] 
+	then
+		echo setting hard and soft open files ulimit to $CLOUDIFY_OPEN_FILES_LIMIT
+		ulimit -HSn $CLOUDIFY_OPEN_FILES_LIMIT
+		echo Finished setting open files limit
+	
+	fi
+	if [ -f ${WORKING_HOME_DIRECTORY}/privileged-script.sh ]
+	then
+		echo executing privileged script
+		source ${WORKING_HOME_DIRECTORY}/privileged-script.sh
+	fi
+	
+	echo finished priviliged actions 
+}
+
+
+# first check if we are in an advanced step of priviliged bootstrap
+if [ ! -z $PRIVILEGED_BOOTSTRAP_USER ]
+then
+	echo In second phase of privileged bootstrap
+	# phase 2
+	privilegedActions
+	targetUser="$PRIVILEGED_BOOTSTRAP_USER"
+	export PRIVILEGED_BOOTSTRAP_USER=
+	echo "export PRIVILEGED_MARKER=on;${WORKING_HOME_DIRECTORY}/bootstrap-management.sh" | sudo -u $targetUser -s
+	exit $?
+else
+	if [ ! -z $PRIVILEGED_MARKER ]
+	then
+		# finished privileged phase of bootstrap
+		export PRIVILEGED_MARKER=
+		echo finished privileged phase of bootstrap
+	else
+
+		if [ ! -z $CLOUDIFY_OPEN_FILES_LIMIT ] || [ -f "privileged-script.sh" ] 
+		then
+			# phase 1 - begin priviliged bootstrap process
+			echo In first phase of privileged bootstrap
+			if [ `whoami` = "root" ] 
+			then
+				# just run the privileged actions now
+				priviligedActions
+			else	
+				# verify passwordless sudo privileges for current user
+				if [ "$GIGASPACES_AGENT_ENV_PRIVILEGED" = "true" ]; then
+					sudo -n ls > /dev/null || exit 1
+					export PRIVILEGED_BOOTSTRAP_USER=`whoami`
+					sudo -E ${WORKING_HOME_DIRECTORY}/bootstrap-management.sh
+					exit 0
+				else
+					# not a password-less sudoer - bootstrap must fail
+					exit 115 
+				fi
+			fi
+		else
+			echo Standard bootstrap process will be used
+		fi
+	fi
+
+fi
+
+# Execute pre-bootstrap customization script if exists
+run_script "pre-bootstrap"
 
 JAVA_32_URL="http://repository.cloudifysource.org/com/oracle/java/1.6.0_32/jdk-6u32-linux-i586.bin"
 JAVA_64_URL="http://repository.cloudifysource.org/com/oracle/java/1.6.0_32/jdk-6u32-linux-x64.bin"
 
 # If not JDK specified, determine which JDK to install based on hardware architecture
-if [ -z "$CLOUDIFY_AGENT_ENV_JAVA_URL" ]; then
+if [ -z "$GIGASPACES_AGENT_ENV_JAVA_URL" ]; then
 	ARCH=`uname -m`
 	echo Machine Architecture -- $ARCH
 	if [ "$ARCH" = "i686" ]; then
-		export CLOUDIFY_AGENT_ENV_JAVA_URL=$JAVA_32_URL
+		export GIGASPACES_AGENT_ENV_JAVA_URL=$JAVA_32_URL
 	elif [ "$ARCH" = "x86_64" ]; then
-		export CLOUDIFY_AGENT_ENV_JAVA_URL=$JAVA_64_URL
-	else 
+		export GIGASPACES_AGENT_ENV_JAVA_URL=$JAVA_64_URL
+	else
 		echo Unknown architecture -- $ARCH -- defaulting to 32 bit JDK
-		export CLOUDIFY_AGENT_ENV_JAVA_URL=$JAVA_32_URL
+		export GIGASPACES_AGENT_ENV_JAVA_URL=$JAVA_32_URL
 	fi
-	
-fi  
 
-if [ "$CLOUDIFY_AGENT_ENV_JAVA_URL" = "NO_INSTALL" ]; then
+fi
+
+if [ "$GIGASPACES_AGENT_ENV_JAVA_URL" = "NO_INSTALL" ]; then
 	echo "JDK will not be installed"
 else
-	echo Previous JAVA_HOME value -- $JAVA_HOME 
-	export CLOUDIFY_ORIGINAL_JAVA_HOME=$JAVA_HOME
+	echo Previous JAVA_HOME value -- $JAVA_HOME
+	export GIGASPACES_ORIGINAL_JAVA_HOME=$JAVA_HOME
 
-	echo Downloading JDK from $CLOUDIFY_AGENT_ENV_JAVA_URL    
-	wget -q -O $WORKING_HOME_DIRECTORY/java.bin $CLOUDIFY_AGENT_ENV_JAVA_URL
+	echo Downloading JDK from $GIGASPACES_AGENT_ENV_JAVA_URL
+	wget -q -T 1200 -O $WORKING_HOME_DIRECTORY/java.bin $GIGASPACES_AGENT_ENV_JAVA_URL || error_exit $? 101 "Failed downloading Java installation from $GIGASPACES_AGENT_ENV_JAVA_URL"
 	chmod +x $WORKING_HOME_DIRECTORY/java.bin
 	echo -e "\n" > $WORKING_HOME_DIRECTORY/input.txt
+	rm -rf ~/java || error_exit $? 102 "Failed removing old java installation directory"
 	mkdir ~/java
 	cd ~/java
 	
 	echo Installing JDK
 	$WORKING_HOME_DIRECTORY/java.bin < $WORKING_HOME_DIRECTORY/input.txt > /dev/null
-	mv ~/java/*/* ~/java || error_exit $? "Failed moving JDK installation"
+	mv ~/java/*/* ~/java || error_exit $? 103 "Failed moving JDK installation"
 	rm -f $WORKING_HOME_DIRECTORY/input.txt
     export JAVA_HOME=~/java
+    rm -f $WORKING_HOME_DIRECTORY/java.bin || error_exit $? 136 "Failed deleting java.bin from home directory"
 fi  
 
 export EXT_JAVA_OPTIONS="-Dcom.gs.multicast.enabled=false"
 
-if [ ! -z "$CLOUDIFY_LINK" ]; then
-	echo Downloading cloudify installation from $CLOUDIFY_LINK.tar.gz
-	wget -q $CLOUDIFY_LINK.tar.gz -O $WORKING_HOME_DIRECTORY/gigaspaces.tar.gz || error_exit $? "Failed downloading cloudify installation"
+if [ ! -z "$GIGASPACES_LINK" ]; then
+	echo Downloading cloudify installation from $GIGASPACES_LINK.tar.gz
+	wget -q -t0 -c $GIGASPACES_LINK.tar.gz -O $WORKING_HOME_DIRECTORY/gigaspaces.tar.gz || error_exit $? 104 "Failed downloading cloudify installation"
 fi
 
-if [ ! -z "$CLOUDIFY_OVERRIDES_LINK" ]; then
-	echo Downloading cloudify overrides from $CLOUDIFY_OVERRIDES_LINK.tar.gz
-	wget -q $CLOUDIFY_OVERRIDES_LINK.tar.gz -O $WORKING_HOME_DIRECTORY/gigaspaces_overrides.tar.gz || error_exit $? "Failed downloading cloudify overrides"
+if [ ! -z "$GIGASPACES_OVERRIDES_LINK" ]; then
+	echo Downloading cloudify overrides from $GIGASPACES_OVERRIDES_LINK.tar.gz
+	wget -q -T 1200 $GIGASPACES_OVERRIDES_LINK.tar.gz -O $WORKING_HOME_DIRECTORY/gigaspaces_overrides.tar.gz || error_exit $? 105 "Failed downloading cloudify overrides"
 fi
 
 # Todo: Check this condition
 if [ ! -d "~/gigaspaces" -o $WORKING_HOME_DIRECTORY/gigaspaces.tar.gz -nt ~/gigaspaces ]; then
-	rm -rf ~/gigaspaces || error_exit $? "Failed removing old gigaspaces directory"
-	mkdir ~/gigaspaces || error_exit $? "Failed creating gigaspaces directory"
-	
+	rm -rf ~/gigaspaces || error_exit $? 106 "Failed removing old gigaspaces directory"
+	mkdir ~/gigaspaces || error_exit $? 107 "Failed creating gigaspaces directory"
+
 	# 2 is the error level threshold. 1 means only warnings
-	# this is needed for testing purposes on zip files created on the windows platform 
-	tar xfz $WORKING_HOME_DIRECTORY/gigaspaces.tar.gz -C ~/gigaspaces || error_exit_on_level $? "Failed extracting cloudify installation" 2 
+	# this is needed for testing purposes on zip files created on the windows platform
+	tar xfz $WORKING_HOME_DIRECTORY/gigaspaces.tar.gz -C ~/gigaspaces || error_exit_on_level $? 108 "Failed extracting cloudify installation" 2
+	rm -f $WORKING_HOME_DIRECTORY/gigaspaces.tar.gz error_exit $? 134 "Failed deleting gigaspaces.tar.gz from home directory"
 
 	# Todo: consider removing this line
-	chmod -R 777 ~/gigaspaces || error_exit $? "Failed changing permissions in cloudify installion"
-	mv ~/gigaspaces/*/* ~/gigaspaces || error_exit $? "Failed moving cloudify installation"
-	
-	if [ ! -z "$CLOUDIFY_OVERRIDES_LINK" ]; then
+	chmod -R 777 ~/gigaspaces || error_exit $? 109 "Failed changing permissions in cloudify installation"
+	mv ~/gigaspaces/*/* ~/gigaspaces || error_exit $? 110 "Failed moving cloudify installation"
+
+	if [ ! -z "$GIGASPACES_OVERRIDES_LINK" ]; then
 		echo Copying overrides into cloudify distribution
-		tar xfz $WORKING_HOME_DIRECTORY/gigaspaces_overrides.tar.gz -d ~/gigaspaces || error_exit_on_level $? "Failed extracting cloudify overrides" 2 		
+		tar xfz $WORKING_HOME_DIRECTORY/gigaspaces_overrides.tar.gz -C ~/gigaspaces || error_exit_on_level $? 111 "Failed extracting cloudify overrides" 2
+		rm -f $WORKING_HOME_DIRECTORY/gigaspaces_overrides.tar.gz error_exit $? 135 "Failed deleting gigaspaces_overrides.tar.gz from home directory"
 	fi
 fi
 
@@ -125,41 +232,27 @@ fi
 
 # UPDATE SETENV SCRIPT...
 echo Updating environment script
-cd ~/gigaspaces/bin || error_exit $? "Failed changing directory to bin directory"
+cd ~/gigaspaces/bin || error_exit $? 112 "Failed changing directory to bin directory"
 
-sed -i "1i export NIC_ADDR=$MACHINE_IP_ADDRESS" setenv.sh || error_exit $? "Failed updating setenv.sh"
-sed -i "1i export LOOKUPLOCATORS=$LUS_IP_ADDRESS" setenv.sh || error_exit $? "Failed updating setenv.sh"
-sed -i "1i export CLOUDIFY_CLOUD_IMAGE_ID=$CLOUDIFY_CLOUD_IMAGE_ID" setenv.sh || error_exit $? "Failed updating setenv.sh"
-sed -i "1i export CLOUDIFY_CLOUD_HARDWARE_ID=$CLOUDIFY_CLOUD_HARDWARE_ID" setenv.sh || error_exit $? "Failed updating setenv.sh"
-sed -i "1i export PATH=$JAVA_HOME/bin:$PATH" setenv.sh || error_exit $? "Failed updating setenv.sh"
-sed -i "1i export JAVA_HOME=$JAVA_HOME" setenv.sh || error_exit $? "Failed updating setenv.sh"
+sed -i "2i . ${ENV_FILE_PATH}" setenv.sh || error_exit $? 113 "Failed updating setenv.sh"
+sed -i "2i export NIC_ADDR=$MACHINE_IP_ADDRESS" setenv.sh || error_exit $? 113 "Failed updating setenv.sh"
+sed -i "2i export LOOKUPLOCATORS=$LUS_IP_ADDRESS" setenv.sh || error_exit $? 113 "Failed updating setenv.sh"
+sed -i "2i export PATH=$JAVA_HOME/bin:$PATH" setenv.sh || error_exit $? 113 "Failed updating setenv.sh"
+sed -i "2i export JAVA_HOME=$JAVA_HOME" setenv.sh || error_exit $? 113 "Failed updating setenv.sh"
 
-cd ~/gigaspaces/tools/cli || error_exit $? "Failed changing directory to cli directory"
-
-# START AGENT ALONE OR WITH MANAGEMENT
-if [ -f nohup.out ]; then
-  rm nohup.out
-fi
-
-if [ -f nohup.out ]; then
-   error_exit 1 "Failed to remove nohup.out Probably used by another process"
-fi
 
 # Privileged mode handling
-if [ "$CLOUDIFY_AGENT_ENV_PRIVILEGED" = "true" ]; then
+if [ "$GIGASPACES_AGENT_ENV_PRIVILEGED" = "true" ]; then
 	# First check if sudo is allowed for current session
-	export CLOUDIFY_USER=`whoami`
-	if [ "$CLOUDIFY_USER" = "root" ]; then
+	export GIGASPACES_USER=`whoami`
+	if [ "$GIGASPACES_USER" = "root" ]; then
 		# root is privileged by definition
 		echo Running as root
-		echo `int-ip eth0` `hostname` `hostname -s` | tee -a /etc/hosts 
 	else
-		sudo -n ls > /dev/null || error_exit_on_level $? "Current user is not a sudoer, or requires a password for sudo" 1
-		echo `int-ip eth0` `hostname` `hostname -s` | sudo tee -a /etc/hosts 
+		sudo -n ls > /dev/null || error_exit_on_level $? 115 "Current user is not a sudoer, or requires a password for sudo" 1
 	fi
-	
+
 	# now modify sudoers configuration to allow execution without tty
-	echo Checking for Ubuntu
 	grep -i ubuntu /proc/version > /dev/null
 	if [ "$?" -eq "0" ]; then
 			# ubuntu
@@ -174,36 +267,66 @@ if [ "$CLOUDIFY_AGENT_ENV_PRIVILEGED" = "true" ]; then
 	else
 			# other - modify sudoers file
 			if [ ! -f "/etc/sudoers" ]; then
-					error_exit 101 "Could not find sudoers file at expected location (/etc/sudoers)"
+					error_exit 116 "Could not find sudoers file at expected location (/etc/sudoers)"
 			fi
 			echo Setting privileged mode
-			sudo sed -i 's/^Defaults.*requiretty/#&/g' /etc/sudoers || error_exit_on_level $? "Failed to edit sudoers file to disable requiretty directive" 1
+			sudo sed -i 's/^Defaults.*requiretty/#&/g' /etc/sudoers || error_exit_on_level $? 117 "Failed to edit sudoers file to disable requiretty directive" 1
 	fi
 
 fi
 
 # Execute per-template command
-if [ ! -z "$CLOUDIFY_AGENT_ENV_INIT_COMMAND" ]; then
+if [ ! -z "$GIGASPACES_AGENT_ENV_INIT_COMMAND" ]; then
 	echo Executing initialization command
-	$CLOUDIFY_AGENT_ENV_INIT_COMMAND
+	cd $WORKING_HOME_DIRECTORY
+	eval "$GIGASPACES_AGENT_ENV_INIT_COMMAND"
 fi
 
+cd ~/gigaspaces/tools/cli || error_exit $? 118 "Failed changing directory to cli directory"
+
+# Removing old nohup.out
+if [ -f nohup.out ]; then
+	echo Removing old nohup.out
+	rm nohup.out
+fi
+
+if [ -f nohup.out ]; then
+   error_exit 114 "Failed to remove nohup.out, it might be used by another process"
+fi
+
+# START AGENT ALONE OR WITH MANAGEMENT
+START_COMMAND_ARGS="-timeout 30 --verbose"
 if [ "$GSA_MODE" = "agent" ]; then
 	ERRMSG="Failed starting agent"
-	nohup ./cloudify.sh start-agent -timeout 30 --verbose -zone $MACHINE_ZONES -auto-shutdown
+	START_COMMAND="start-agent"
 else
 	ERRMSG="Failed starting management services"
+	START_COMMAND="start-management"
+	START_COMMAND_ARGS="${START_COMMAND_ARGS} -cloud-file ${CLOUD_FILE}"
 	if [ "$NO_WEB_SERVICES" = "true" ]; then
-		nohup ./cloudify.sh start-management -no-web-services -no-management-space -timeout 30 --verbose -auto-shutdown -cloud-file $CLOUD_FILE
-	else
-		nohup ./cloudify.sh start-management -timeout 30 --verbose -auto-shutdown -cloud-file $CLOUD_FILE
+		START_COMMAND_ARGS="${START_COMMAND_ARGS} -no-web-services -no-management-space"
 	fi
 fi	
 
+# Execute post-bootstrap customization script if exists
+run_script "post-bootstrap"
+
+#disable firewall
+service iptables stop
+
+# Add agent restart command to scheduled tasks.
+cat <(crontab -l) <(echo "@reboot nohup ~/gigaspaces/tools/cli/cloudify.sh $START_COMMAND $START_COMMAND_ARGS") | crontab -
+
+./cloudify.sh $START_COMMAND $START_COMMAND_ARGS
+
 RETVAL=$?
-echo cat nohup.out
-cat nohup.out
+
 if [ $RETVAL -ne 0 ]; then
-  error_exit $RETVAL $ERRMSG
+	echo start command failed, exit code is: $RETVAL
+	# exit codes that are larger than 200 are not specified by Cloudify. We use the 255 code to indicate a custom error.
+	if [ $RETVAL -gt 200 ]; then
+		RETVAL=255
+	fi
+	error_exit $? $RETVAL "$ERRMSG"
 fi
 exit 0
