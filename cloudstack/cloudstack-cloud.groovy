@@ -24,7 +24,9 @@ cloud {
 
 		provider "cloudstack"
 
-		cloudifyUrl cloudifyUrl
+		//The URL for the cloudify ditribution that will be downloaded when new image are created. 
+		//only use this if you want to override the default cloudify URL
+		//cloudifyUrl cloudifyUrl
 
 		machineNamePrefix "cloudify-agent-"
 		// Optional. Defaults to true. Specifies whether cloudify should try to deploy services on the management machine.
@@ -58,9 +60,9 @@ cloud {
 		templates ([
 
 			SMALL_LINUX : computeTemplate{
-				locationId linuxImageIdDestinationManagement
+				locationId imageLocationId
 				// Mandatory. Image ID.
-				imageId linuxImageId
+				imageId cloudstackImageId
 				// Mandatory. Files from the local directory will be copied to this directory on the remote machine.
 				remoteDirectory remoteUploadDirectory
 				// Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
@@ -68,20 +70,20 @@ cloud {
 				// Mandatory. Amount of RAM available to machine.
 				machineMemoryMB 1600 
 				// Mandatory. Hardware ID.
-				hardwareId hardwareId
+				hardwareId cloustackHardwareId
 				
-				username userName
+				username sshUsername
 				
-				password password
+				password sshPassword
 				
 				javaUrl "http://repository.cloudifysource.org/com/oracle/java/1.6.0_32/jdk-6u32-linux-x64.bin"
 				
 				privileged true
 
 				overrides ([
-					"securityGroups" : [defaultSecurityGroup] as String[],
+					"securityGroups" : [securityGroup] as String[],
 					//"diskOfferingsId":["c870503d-d0f2-4e0d-b62c-1303b7411850"],
-					"jclouds.endpoint" : jcloudsEndpoint
+					"jclouds.endpoint" : cloudStackAPIEndpoint
 				])
 				options ([
 
