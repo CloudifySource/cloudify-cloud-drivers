@@ -72,9 +72,15 @@ cloud {
 				// Mandatory. Hardware ID.
 				hardwareId cloustackHardwareId
 				
+				//The SSH username and password for Cloudify to use when installing and configuring created VMs. 
+				//This configuration assumes you're using simple SSH authentication without a keypair. 
+				//If you're using keypair to authenticate comment out the below two lines. 
 				username sshUsername
-				
 				password sshPassword
+
+				//Optional. Name of key file to use for authenticating to the remot machine. Uncomment this line 
+				//if key files are to be for SSH authentication into the created VM. 
+				//keyFile sshKeypairFile
 				
 				javaUrl "http://repository.cloudifysource.org/com/oracle/java/1.6.0_32/jdk-6u32-linux-x64.bin"
 				
@@ -88,7 +94,9 @@ cloud {
 				options ([
 
 					"networkId" : networkId,
-					"setupStaticNat" : false
+					"setupStaticNat" : false, 
+					//Uncomment this line if key files are to be for SSH authentication into the created VM. 
+					//"keyPair" : sshKeypairName
 
 				])
 				installer {
