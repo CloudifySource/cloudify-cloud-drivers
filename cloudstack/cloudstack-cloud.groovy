@@ -60,9 +60,9 @@ cloud {
 		templates ([
 
 			SMALL_LINUX : computeTemplate{
-				locationId imageLocationId
+				locationId zoneId
 				// Mandatory. Image ID.
-				imageId cloudstackImageId
+				imageId tamplateId
 				// Mandatory. Files from the local directory will be copied to this directory on the remote machine.
 				remoteDirectory remoteUploadDirectory
 				// Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
@@ -70,7 +70,7 @@ cloud {
 				// Mandatory. Amount of RAM available to machine.
 				machineMemoryMB 1600 
 				// Mandatory. Hardware ID.
-				hardwareId cloustackHardwareId
+				hardwareId computeOfferingId
 				
 				//The SSH username and password for Cloudify to use when installing and configuring created VMs. 
 				//This configuration assumes you're using simple SSH authentication without a keypair. 
