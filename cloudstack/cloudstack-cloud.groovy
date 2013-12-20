@@ -62,7 +62,7 @@ cloud {
 			SMALL_LINUX : computeTemplate{
 				locationId zoneId
 				// Mandatory. Image ID.
-				imageId tamplateId
+				imageId templateId
 				// Mandatory. Files from the local directory will be copied to this directory on the remote machine.
 				remoteDirectory remoteUploadDirectory
 				// Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
@@ -78,8 +78,8 @@ cloud {
 				username sshUsername
 				password sshPassword
 
-				//Optional. Name of key file to use for authenticating to the remot machine. Uncomment this line 
-				//if key files are to be for SSH authentication into the created VM. 
+				//Optional. Name of key file to use for authenticating to the remote machine. Uncomment this line 
+				//if key files are to be used for SSH authentication into the created VM. 
 				//keyFile sshKeypairFile
 				
 				javaUrl "http://repository.cloudifysource.org/com/oracle/java/1.6.0_32/jdk-6u32-linux-x64.bin"
