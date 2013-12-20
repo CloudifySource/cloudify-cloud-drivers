@@ -12,7 +12,7 @@ cloud {
 		managementMachineTemplate "SMALL_LINUX"
 		// Optional. Indicates whether internal cluster communications should use the machine private IP. Defaults to true.
 		connectToPrivateIp true
-		bootstrapManagementOnPublicIp false
+		//bootstrapManagementOnPublicIp true
 		// Path to folder where management state will be written.
 		persistentStoragePath persistencePath
 	}
