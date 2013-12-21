@@ -1,5 +1,5 @@
 cloud {
-	name = "cloudstack"
+	name = "exoscale"
 
 	/********
 	 * General configuration information about the cloud driver implementation.
