@@ -62,7 +62,7 @@ cloud {
 			SMALL_LINUX : computeTemplate{
 				locationId zoneId
 				// Mandatory. Image ID.
-				imageId tamplateId
+				imageId templateId
 				// Mandatory. Files from the local directory will be copied to this directory on the remote machine.
 				remoteDirectory remoteUploadDirectory
 				// Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
@@ -113,7 +113,7 @@ cloud {
 			SMALL_UBUNTU : computeTemplate{
 				locationId zoneId
 				// Mandatory. Image ID.
-				imageId ubuntuTamplateId
+				imageId ubuntuTemplateId
 				// Mandatory. Files from the local directory will be copied to this directory on the remote machine.
 				remoteDirectory remoteUploadDirectory
 				// Mandatory. All files from this LOCAL directory will be copied to the remote machine directory.
