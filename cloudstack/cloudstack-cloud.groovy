@@ -93,7 +93,7 @@ cloud {
 				])
 				options ([
 
-					"networkId" : networkId,
+					"networkIds" : Arrays.asList([publicNetworkId, privateNetworkId] as String[]),
 					"setupStaticNat" : false, 
 					//Uncomment this line if key files are to be for SSH authentication into the created VM. 
 					//"keyPair" : sshKeypairName
