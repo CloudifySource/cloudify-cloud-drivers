@@ -138,14 +138,13 @@ cloud {
 				privileged true
 
 				overrides ([
-					"securityGroups" : [securityGroup] as String[],
 					//"diskOfferingsId":["c870503d-d0f2-4e0d-b62c-1303b7411850"],
 					"jclouds.endpoint" : cloudStackAPIEndpoint
 				])
-				options ([
+				options ([					
 					//Comment out this line if you're using plain username/password SSH authentication into the created VM. 
-					"keyPair" : sshKeypairName
-
+					"keyPair" : sshKeypairName, 
+					"securityGroupIds": [securityGroupId]
 				])
 				installer {
 					connectionTestRouteResolutionTimeoutMillis 120000
