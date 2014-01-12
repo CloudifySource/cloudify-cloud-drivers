@@ -72,10 +72,12 @@ cloud {
 				// Mandatory. Hardware ID.
 				hardwareId computeOfferingId
 				
-				//The SSH username and password for Cloudify to use when installing and configuring created VMs. 
-				//This configuration assumes you're using simple SSH authentication without a keypair. Uncomment
-				//the two lines below if this is the case
+				//The SSH username for Cloudify to use when installing and configuring created VMs. 
 				username sshUsername
+
+				//The SSH password for Cloudify to use when installing and configuring created VMs. 
+				//This configuration assumes you're using simple SSH authentication without a keypair. Uncomment
+				//the line below if this is the case
 				//password sshPassword
 
 				//Name of key file to use for authenticating to the remot machine. Comment out this line 
@@ -87,13 +89,12 @@ cloud {
 				privileged true
 
 				overrides ([
-					"securityGroups" : [securityGroup] as String[],
-					//"diskOfferingsId":["c870503d-d0f2-4e0d-b62c-1303b7411850"],
 					"jclouds.endpoint" : cloudStackAPIEndpoint
 				])
 				options ([
 					//Comment out this line if you're using plain username/password SSH authentication into the created VM. 
-					"keyPair" : sshKeypairName
+					"keyPair" : sshKeypairName, 
+					"securityGroupIds": [securityGroupId]
 
 				])
 				installer {
@@ -123,10 +124,12 @@ cloud {
 				// Mandatory. Hardware ID.
 				hardwareId computeOfferingId
 				
-				//The SSH username and password for Cloudify to use when installing and configuring created VMs. 
-				//This configuration assumes you're using simple SSH authentication without a keypair. Uncomment
-				//the two lines below if this is the case
+				//The SSH username for Cloudify to use when installing and configuring created VMs. 
 				username sshUsername
+
+				//The SSH password for Cloudify to use when installing and configuring created VMs. 
+				//This configuration assumes you're using simple SSH authentication without a keypair. Uncomment
+				//the line below if this is the case
 				//password sshPassword
 
 				//Name of key file to use for authenticating to the remot machine. Comment out this line 
