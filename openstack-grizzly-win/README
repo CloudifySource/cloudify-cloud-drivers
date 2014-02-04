@@ -1,0 +1,15 @@
+To use windows on openstack, you will first need an image with Cygwin installed. 
+
+To create a windows  image with OpenSSH:
+	1.	Install Cygwin by running setup.exe from: http://cygwin.com/setup-x86_64.exe
+	2.	While installing Cygwin, make sure to select the openssh component (it is not selected by default).
+	3.	To set up openssh, follow the instruction here: http://www.noah.org/ssh/cygwin-sshd.html
+			a.	Start a Cygwin bash shell
+			b.	ssh-host-config -y
+			c.	cygrunsrv -S sshd
+	4.	Open port 22 in the Windows firewall 
+	5.	Create a snapshot from the image.
+	
+Use your snapshot imageId to bootstrap to windows instances.
+
+
